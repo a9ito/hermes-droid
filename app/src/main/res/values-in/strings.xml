@@ -99,7 +99,7 @@
     <string name="error_network">Kesalahan jaringan. Periksa host, port, dan pastikan gateway berjalan.</string>
     <string name="error_auth">Autentikasi gagal. Periksa token API kamu.</string>
     <string name="error_timeout">Permintaan melebihi batas waktu.</string>
-    <string name="error_unexpected">Kesalahan tak terduga (%1$s).</string>
+    <string name="error_unexpected">Kesalahan tak terduga.</string>
     <string name="action_retry">Coba lagi</string>
     <string name="action_dismiss">Tutup</string>
 

@@ -1,8 +1,10 @@
 package com.a9ito.hermesagent.data.remote
 
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionChunk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -57,6 +59,10 @@ class ChatStreamer(
             }
         }
     }
+        // OkHttp execute()/socket reads block the calling thread; viewModelScope
+        // collects this flow on Dispatchers.Main, so the blocking upstream must
+        // run on the IO dispatcher or Android throws NetworkOnMainThreadException.
+        .flowOn(Dispatchers.IO)
 
     /** Pull `choices[0].delta.content` out of one chunk, tolerating junk. */
     private fun parseDelta(payload: String): String? = try {

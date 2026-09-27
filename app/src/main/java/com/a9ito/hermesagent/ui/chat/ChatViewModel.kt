@@ -10,6 +10,7 @@ import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,6 +85,9 @@ class ChatViewModel(
                 }
                 _state.update { it.copy(history = it.history.finish(assistantId), sending = false) }
             } catch (t: Throwable) {
+                // Never turn coroutine cancellation (stop/clear/screen leave) into a
+                // visible error; rethrow so structured concurrency keeps working.
+                if (t is CancellationException) throw t
                 val kind = if (t is FallbackFailure) t.kind else repository.classify(t)
                 _state.update {
                     it.copy(
