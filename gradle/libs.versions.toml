@@ -1,7 +1,10 @@
 [versions]
 # --- Build toolchain (verified latest-stable against live Maven metadata, 2026-09-27) ---
 agp = "9.4.1"                      # latest stable AGP; requires Gradle 9.6.0 + JDK 17, max API 37
-kotlin = "2.2.20"                  # stable Kotlin; compose-compiler + serialization plugins ship for it
+# AGP 9.x has BUILT-IN Kotlin (the org.jetbrains.kotlin.android plugin must NOT
+# be applied). This version drives only the compose + serialization compiler
+# plugins and MUST match AGP 9.4.1's bundled Kotlin (kotlin-gradle-plugin 2.2.10).
+kotlin = "2.2.10"
 ks-serialization-json = "1.9.0"
 coroutines = "1.10.2"
 
@@ -55,6 +58,6 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+# NOTE: no kotlin-android plugin — AGP 9.x provides Kotlin support built-in.
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
