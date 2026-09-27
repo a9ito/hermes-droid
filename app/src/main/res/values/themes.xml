@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!--
        Base platform theme used only for the window shell before Compose draws
        (and for system-bar defaults). All real theming is done in Compose via
-       MaterialExpressiveTheme. No Material Components (MDC) dependency needed;
+       the app's MaterialTheme. No Material Components (MDC) dependency needed;
        we extend the platform Material theme, available since API 21.
     -->
     <style name="Theme.HermesAgent" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <!-- Draw into display cutouts; attribute exists on API 27+, ignored below. -->
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
 
 </resources>
