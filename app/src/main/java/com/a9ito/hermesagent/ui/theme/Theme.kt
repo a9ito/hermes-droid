@@ -3,8 +3,7 @@ package com.a9ito.hermesagent.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -80,18 +79,24 @@ private val DarkColors: ColorScheme = darkColorScheme(
 )
 
 /**
- * App theme built on Material 3 Expressive.
+ * App theme built on Material 3, styled for the Expressive look.
  *
  * - Dynamic color via [dynamicLightColorScheme] / [dynamicDarkColorScheme] on
- *   Android 12+ (API 31), falling back to the hand-picked palette above.
- * - [MaterialExpressiveTheme] applies the Expressive motion system: when its
- *   `motionScheme` argument is omitted it defaults to `MotionScheme.expressive()`
- *   (spring-based transitions, not linear/ease). That default factory is library
- *   -internal in material3 1.4.0, so we rely on the default rather than passing
- *   it explicitly — the Expressive [AppShapes] and [AppTypography] ramp are set
- *   here.
+ *   Android 12+ (API 31), falling back to the hand-picked plum palette above.
+ * - Motion is spring-based, not linear/ease: the public [MaterialTheme] installs
+ *   material3's standard [androidx.compose.material3.MotionScheme], whose specs
+ *   are all `spring(...)` (damping/stiffness tokens) — components animate with
+ *   springs out of the box.
+ * - Expressive shape and type tokens come from [AppShapes] and [AppTypography].
+ *
+ * Note on the fully-public Expressive API: `MaterialExpressiveTheme` and
+ * `MotionScheme.expressive()` are still library-`internal` in material3 1.4.0
+ * (the current stable). Their public form ships in material3 1.5.0+, which
+ * requires compileSdk 37 (Android 17, not yet stable). To stay on stable
+ * (material3 1.4.0, compileSdk 36) we drive Expressive through the public
+ * [MaterialTheme] surface above; swap in `MaterialExpressiveTheme` once 1.5.0 is
+ * stable and API 37 is available.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HermesAgentTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -108,7 +113,7 @@ fun HermesAgentTheme(
         else -> LightColors
     }
 
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = colorScheme,
         shapes = AppShapes,
         typography = AppTypography,
