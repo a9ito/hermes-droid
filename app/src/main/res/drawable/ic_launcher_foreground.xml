@@ -1,0 +1,19 @@
+<!--
+   Adaptive-icon foreground. 108x108dp canvas; the inner 66dp is the safe zone.
+   A simple, bold "H" mark (Hermes) drawn as a vector so it scales crisply and
+   works as a monochrome/themed icon too. Kept deliberately simple per spec.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Left stem -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38,34 h9 v18 h14 v-18 h9 v40 h-9 v-14 h-14 v14 h-9 z" />
+    <!-- Small orbit dot, top-right of the safe zone, for a bit of character -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M72,32 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>

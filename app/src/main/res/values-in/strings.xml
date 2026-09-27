@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Indonesian (Bahasa Indonesia) strings for Hermes Agent.
+
+   NOTE: Android uses the legacy ISO 639 code "in" for Indonesian, not "id".
+   The directory MUST be values-in/ or the translation will not load.
+
+   Every id here mirrors values/strings.xml one-for-one. Keep them in sync when
+   adding new strings.
+-->
+<resources>
+
+    <!-- App -->
+    <string name="app_name">Hermes Agent</string>
+
+    <!-- Navigasi bawah / judul layar -->
+    <string name="nav_chat">Obrolan</string>
+    <string name="nav_status">Status</string>
+    <string name="nav_settings">Pengaturan</string>
+
+    <!-- ============================ Layar Pengaturan ============================ -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_connection_header">Koneksi</string>
+    <string name="settings_connection_subtitle">Arahkan aplikasi ke server API Hermes Agent yang sedang berjalan.</string>
+
+    <string name="settings_host_label">Host atau URL</string>
+    <string name="settings_host_placeholder">192.168.1.10 atau https://host-saya</string>
+    <string name="settings_host_supporting">IP, nama host, atau URL lengkap. http:// dipakai otomatis jika skema tidak diisi.</string>
+
+    <string name="settings_port_label">Port</string>
+    <string name="settings_port_placeholder">8642</string>
+    <string name="settings_port_supporting">Port default server API Hermes adalah 8642. Kosongkan jika URL sudah menyertakan port.</string>
+
+    <string name="settings_token_label">Token API</string>
+    <string name="settings_token_placeholder">Nilai API_SERVER_KEY</string>
+    <string name="settings_token_supporting">Dikirim sebagai token Bearer. Disimpan terenkripsi di perangkat ini dan tidak pernah dicatat di log.</string>
+    <string name="settings_token_show">Tampilkan token</string>
+    <string name="settings_token_hide">Sembunyikan token</string>
+
+    <string name="settings_save">Simpan</string>
+    <string name="settings_saved">Pengaturan tersimpan</string>
+    <string name="settings_clear">Hapus koneksi tersimpan</string>
+    <string name="settings_cleared">Koneksi dihapus</string>
+
+    <string name="settings_resolved_endpoint">Endpoint hasil: %1$s</string>
+    <string name="settings_error_host_required">Masukkan host atau URL.</string>
+    <string name="settings_error_token_required">Masukkan token API.</string>
+    <string name="settings_error_port_invalid">Port harus angka antara 1 dan 65535.</string>
+    <string name="settings_error_host_invalid">Itu sepertinya bukan host atau URL yang valid.</string>
+
+    <!-- ============================ Layar Obrolan ============================ -->
+    <string name="chat_title">Obrolan</string>
+    <string name="chat_input_hint">Kirim pesan ke agen kamu…</string>
+    <string name="chat_send">Kirim</string>
+    <string name="chat_stop">Hentikan</string>
+    <string name="chat_empty_title">Belum ada pesan</string>
+    <string name="chat_empty_subtitle">Kirim pesan untuk mulai mengobrol dengan instance Hermes Agent kamu.</string>
+    <string name="chat_sender_you">Kamu</string>
+    <string name="chat_sender_agent">Agen</string>
+    <string name="chat_thinking">Agen sedang berpikir…</string>
+    <string name="chat_error_prefix">Kesalahan: %1$s</string>
+    <string name="chat_clear_history">Bersihkan percakapan</string>
+    <string name="chat_history_cleared">Percakapan dibersihkan</string>
+
+    <!-- Gerbang saat host/token belum dikonfigurasi -->
+    <string name="chat_locked_title">Koneksi diperlukan</string>
+    <string name="chat_locked_subtitle">Tambahkan host dan token API di Pengaturan sebelum bisa mengobrol.</string>
+    <string name="chat_locked_action">Buka Pengaturan</string>
+
+    <!-- ============================ Layar Status ============================ -->
+    <string name="status_title">Status</string>
+    <string name="status_refresh">Segarkan</string>
+    <string name="status_locked_title">Koneksi diperlukan</string>
+    <string name="status_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk melihat status instance.</string>
+    <string name="status_locked_action">Buka Pengaturan</string>
+
+    <string name="status_loading">Memeriksa instance…</string>
+    <string name="status_reachable">Terjangkau</string>
+    <string name="status_unreachable">Tidak terjangkau</string>
+
+    <string name="status_field_state">Kondisi gateway</string>
+    <string name="status_field_readiness">Kesiapan</string>
+    <string name="status_field_busy">Sibuk</string>
+    <string name="status_field_active_agents">Agen aktif</string>
+    <string name="status_field_model">Model</string>
+    <string name="status_field_version">Versi</string>
+    <string name="status_field_platforms">Platform terhubung</string>
+    <string name="status_field_updated">Diperbarui</string>
+
+    <string name="status_value_yes">Ya</string>
+    <string name="status_value_no">Tidak</string>
+    <string name="status_value_unknown">Tidak diketahui</string>
+    <string name="status_value_none">Tidak ada</string>
+
+    <string name="status_error_prefix">Tidak bisa menjangkau instance: %1$s</string>
+
+    <!-- ============================ Bersama / kesalahan ============================ -->
+    <string name="error_no_connection">Belum ada koneksi yang dikonfigurasi. Cek Pengaturan.</string>
+    <string name="error_network">Kesalahan jaringan. Periksa host, port, dan pastikan gateway berjalan.</string>
+    <string name="error_auth">Autentikasi gagal. Periksa token API kamu.</string>
+    <string name="error_timeout">Permintaan melebihi batas waktu.</string>
+    <string name="error_unexpected">Kesalahan tak terduga (%1$s).</string>
+    <string name="action_retry">Coba lagi</string>
+    <string name="action_dismiss">Tutup</string>
+
+    <!-- Deskripsi konten (aksesibilitas) -->
+    <string name="cd_send_message">Kirim pesan</string>
+    <string name="cd_stop_generation">Hentikan pembuatan</string>
+    <string name="cd_refresh_status">Segarkan status</string>
+    <string name="cd_toggle_token_visibility">Ubah visibilitas token</string>
+
+</resources>
