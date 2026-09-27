@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local config — never commit (may contain sdk.dir and secrets)
+local.properties
+
+# Signing material — NEVER commit keystores or secrets
+*.jks
+*.keystore
+keystore.properties
+release/keystore*.b64
+*.p12
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*~
+
+# Kotlin
+.kotlin/
+
+# Misc build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+output.json
