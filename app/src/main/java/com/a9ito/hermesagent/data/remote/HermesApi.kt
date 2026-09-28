@@ -12,6 +12,7 @@ import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
 import com.a9ito.hermesagent.data.remote.dto.JobEnvelope
 import com.a9ito.hermesagent.data.remote.dto.JobListResponse
 import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
+import com.a9ito.hermesagent.data.remote.dto.ModelOptionsResponse
 import com.a9ito.hermesagent.data.remote.dto.ModelsResponse
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.RunAdmissionDto
@@ -68,6 +69,9 @@ interface HermesApi {
 
     @GET("v1/models")
     suspend fun models(): ModelsResponse
+
+    @GET("api/model/options")
+    suspend fun modelOptions(): ModelOptionsResponse
 
     @GET("v1/skills")
     suspend fun skills(): SkillListResponse

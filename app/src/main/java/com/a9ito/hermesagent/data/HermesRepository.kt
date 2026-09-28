@@ -6,6 +6,7 @@ import com.a9ito.hermesagent.core.Capabilities
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.CronJob
 import com.a9ito.hermesagent.core.ErrorKind
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.InstanceStatus
 import com.a9ito.hermesagent.core.SessionMessage
 import com.a9ito.hermesagent.core.SessionSummary
@@ -27,6 +28,7 @@ import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
 import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
+import com.a9ito.hermesagent.data.remote.dto.ModelOptionsResponse
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.SessionChatPayload
 import com.a9ito.hermesagent.data.remote.dto.SkillDto
@@ -179,6 +181,21 @@ class HermesRepository(
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
             ApiResult.Success(apiFor(config).models().data.map { it.id })
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /**
+     * Rich provider catalog from /api/model/options (providers, current
+     * selection, capability + pricing hints). Only meaningful when the instance
+     * advertises the model_options capability; callers gate on that and fall
+     * back to [fetchModels] otherwise.
+     */
+    suspend fun fetchModelOptions(config: ConnectionConfig): ApiResult<ModelOptions> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).modelOptions().toDomain())
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
         }

@@ -41,6 +41,14 @@
     <string name="session_chat_title">Sesi</string>
     <string name="session_model_pick">Model</string>
     <string name="session_model_title">Model untuk sesi ini</string>
+    <!-- Pemilih model kaya (dari /api/model/options) -->
+    <string name="model_free_tier">tier gratis</string>
+    <string name="model_needs_key">butuh key</string>
+    <string name="model_price_free">gratis</string>
+    <string name="model_price_io">in %1$s / out %2$s</string>
+    <string name="model_reasoning">reasoning</string>
+    <string name="model_fast">fast</string>
+    <string name="model_unavailable">tidak tersedia di tier ini</string>
 
     <!-- ============================ Layar Alat ============================ -->
     <string name="tools_tab_skills">Skill</string>
