@@ -143,5 +143,5 @@ Only the latest release is guaranteed working — older tags marked
 
 ## License
 
-No license is granted yet. All rights reserved by the author until a license is
-added.
+Released under the [MIT License](LICENSE) — free to use, modify and
+redistribute, no warranty.
