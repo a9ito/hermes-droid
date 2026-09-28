@@ -21,6 +21,8 @@
     <string name="nav_jobs">Tugas</string>
     <string name="nav_status">Status</string>
     <string name="nav_settings">Pengaturan</string>
+    <string name="nav_more">Lainnya</string>
+    <string name="nav_menu_close">Tutup menu</string>
 
     <!-- ============================ Layar Sesi ============================ -->
     <string name="sessions_new">Sesi baru</string>
