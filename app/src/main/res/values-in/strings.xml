@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Indonesian (Bahasa Indonesia) strings for Hermes Agent.
+   Indonesian (Bahasa Indonesia) strings for Hermes Droid.
 
    NOTE: Android uses the legacy ISO 639 code "in" for Indonesian, not "id".
    The directory MUST be values-in/ or the translation will not load.
@@ -11,7 +11,7 @@
 <resources>
 
     <!-- App -->
-    <string name="app_name">Hermes Agent</string>
+    <string name="app_name">Hermes Droid</string>
 
     <!-- Navigasi bawah / judul layar -->
     <string name="nav_chat">Obrolan</string>

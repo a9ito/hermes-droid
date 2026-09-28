@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   English (default) strings for Hermes Agent.
+   English (default) strings for Hermes Droid.
 
    Adding a third locale is "add one file": copy this file to
    values-<code>/strings.xml (e.g. values-ja, values-ar) and translate the
@@ -11,7 +11,7 @@
 <resources>
 
     <!-- App -->
-    <string name="app_name">Hermes Agent</string>
+    <string name="app_name">Hermes Droid</string>
 
     <!-- Bottom navigation / screen titles -->
     <string name="nav_chat">Chat</string>
