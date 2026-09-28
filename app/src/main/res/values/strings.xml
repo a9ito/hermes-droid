@@ -16,6 +16,7 @@
     <!-- Bottom navigation / screen titles -->
     <string name="nav_chat">Chat</string>
     <string name="nav_sessions">Sessions</string>
+    <string name="nav_runs">Runs</string>
     <string name="nav_tools">Tools</string>
     <string name="nav_jobs">Jobs</string>
     <string name="nav_status">Status</string>
@@ -52,6 +53,32 @@
 
     <!-- Shared actions -->
     <string name="action_back">Back</string>
+
+    <!-- ============================ Runs screen ============================ -->
+    <string name="runs_prompt_label">Ask the agent to do something…</string>
+    <string name="runs_submit">Start run</string>
+    <string name="runs_locked_title">Connection required</string>
+    <string name="runs_locked_subtitle">Add your host and API token in Settings to start agent runs.</string>
+    <string name="runs_unsupported_title">Runs not supported</string>
+    <string name="runs_unsupported_subtitle">This instance doesn\'t advertise the run-control API (submit/stop/events). Update the gateway to use this screen.</string>
+    <string name="runs_error_prefix">Run failed: %1$s</string>
+    <string name="runs_activity">Activity</string>
+    <string name="runs_stop">Stop</string>
+    <string name="runs_steer">Steer</string>
+    <string name="runs_steer_title">Steer the run</string>
+    <string name="runs_steer_label">Extra guidance for the running agent</string>
+    <string name="runs_steer_send">Send</string>
+    <string name="runs_approval_title">Approve tool call?</string>
+    <string name="runs_approval_tool">Tool: %1$s</string>
+    <string name="runs_state_queued">Queued</string>
+    <string name="runs_state_running">Running…</string>
+    <string name="runs_state_waiting">Waiting for approval</string>
+    <string name="runs_state_stopping">Stopping…</string>
+    <string name="runs_state_completed">Completed</string>
+    <string name="runs_state_failed">Failed</string>
+    <string name="runs_state_cancelled">Cancelled</string>
+    <string name="runs_state_interrupted">Interrupted</string>
+    <string name="runs_state_unknown">Unknown</string>
 
     <!-- ============================ Jobs screen ============================ -->
     <string name="jobs_new">New job</string>
