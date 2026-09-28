@@ -36,6 +36,9 @@
     <string name="sessions_unpin_action">Lepas sematan</string>
     <string name="sessions_pinned_badge">DISEMAT</string>
     <string name="sessions_archive_action">Arsipkan</string>
+    <string name="sessions_search_hint">Cari sesi</string>
+    <string name="sessions_search_clear">Hapus pencarian</string>
+    <string name="sessions_search_empty">Nggak ada sesi yang cocok dengan \"%1$s\".</string>
     <string name="sessions_archive_title">Arsipkan sesi?</string>
     <string name="sessions_archive_message">\"%1$s\" akan disembunyikan dari daftar ini. Sesi tetap tersimpan di instance-mu dan bisa dipulihkan dari desktop.</string>
     <string name="sessions_archive_confirm">Arsipkan</string>
@@ -79,6 +82,7 @@
     <string name="chat_attach_too_large">Gambar terlalu besar (maks 4 MB).</string>
     <string name="chat_attach_failed">Gagal membaca gambar itu.</string>
     <string name="chat_attachment_badge">%1$d gambar dilampirkan</string>
+    <string name="chat_copied">Disalin ke clipboard</string>
 
     <!-- ============================ Layar Run ============================ -->
     <string name="runs_prompt_label">Minta agent melakukan sesuatu…</string>

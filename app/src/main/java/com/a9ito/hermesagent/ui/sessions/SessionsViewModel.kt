@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.SessionSummary
+import com.a9ito.hermesagent.core.filteredBy
 import com.a9ito.hermesagent.core.sortedForDisplay
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
@@ -23,7 +24,12 @@ data class SessionsUiState(
     val errorKind: ErrorKind? = null,
     /** Session id whose chat should be opened; consumed by the screen. */
     val openSessionId: String? = null,
-)
+    /** Live search query for filtering the list (title/model/preview). */
+    val query: String = "",
+) {
+    /** Sessions actually shown: server list filtered by [query] (already sorted). */
+    val visibleSessions: List<SessionSummary> get() = sessions.filteredBy(query)
+}
 
 /**
  * Owns the persisted-session list: load, create, fork, rename, delete. Selecting
@@ -82,6 +88,9 @@ class SessionsViewModel(
 
     fun open(id: String) = _state.update { it.copy(openSessionId = id) }
     fun consumeOpen() = _state.update { it.copy(openSessionId = null) }
+
+    /** Update the live search query; filtering is derived, so no network call. */
+    fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
 
     fun delete(id: String) {
         if (!config.isComplete) return
