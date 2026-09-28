@@ -99,8 +99,8 @@ jobs:
             echo "::error::Missing signed artifact (apk='$APK' aab='$AAB')." && exit 1
           fi
           V="${{ steps.tag.outputs.version }}"
-          cp "$APK" "$OUT/hermes-agent-$V.apk"
-          cp "$AAB" "$OUT/hermes-agent-$V.aab"
+          cp "$APK" "$OUT/hermes-droid-$V.apk"
+          cp "$AAB" "$OUT/hermes-droid-$V.aab"
           echo "dir=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Verify APK signature
@@ -108,15 +108,15 @@ jobs:
         run: |
           set -euo pipefail
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BT/apksigner" verify --verbose "${{ steps.artifacts.outputs.dir }}"/hermes-agent-*.apk
+          "$BT/apksigner" verify --verbose "${{ steps.artifacts.outputs.dir }}"/hermes-droid-*.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ steps.tag.outputs.ref }}
-          name: Hermes Agent ${{ steps.tag.outputs.ref }}
+          name: Hermes Droid ${{ steps.tag.outputs.ref }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            ${{ steps.artifacts.outputs.dir }}/hermes-agent-*.apk
-            ${{ steps.artifacts.outputs.dir }}/hermes-agent-*.aab
+            ${{ steps.artifacts.outputs.dir }}/hermes-droid-*.apk
+            ${{ steps.artifacts.outputs.dir }}/hermes-droid-*.aab

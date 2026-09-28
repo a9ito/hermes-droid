@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Network security policy for Hermes Agent.
+    Network security policy for Hermes Droid.
 
     Hermes' API server speaks plain HTTP (it does not terminate TLS itself), and
     users point this client at self-hosted instances by raw host:port — a

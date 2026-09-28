@@ -1,9 +1,14 @@
-# Hermes Agent (Android)
+# Hermes Droid
 
 A native Android companion client for controlling your own running
 [Hermes Agent](https://hermes-agent.nousresearch.com) instance from your phone —
-chat with it, browse and manage its sessions, inspect its skills and toolsets,
-check its status, and point it at whichever instance you run.
+chat with it, browse and manage its sessions, watch it work, inspect its skills
+and toolsets, drive background runs and scheduled jobs, and point it at whichever
+instance you run.
+
+> **Naming:** *Hermes Droid* is this Android app. *Hermes Agent* is the agent it
+> talks to — the thing you self-host and point the app at. This project is an
+> independent client for that server, not the server itself.
 
 Built with Kotlin + Jetpack Compose and a Material 3 **Expressive** UI.
 
@@ -31,7 +36,7 @@ Built with Kotlin + Jetpack Compose and a Material 3 **Expressive** UI.
   resume, run-now and delete (`/v1/jobs`).
 - **Status** — the instance's readiness, gateway state, active agents,
   connected platforms, and model, from `/health/detailed` + `/v1/models`.
-- **Settings** — point the app at your Hermes API server (host/URL, port,
+- **Settings** — point the app at your Hermes Agent API server (host/URL, port,
   token). The token is encrypted with an AndroidKeyStore-backed AES/GCM key and
   is never logged or stored in plaintext.
 
@@ -50,11 +55,11 @@ reachability from your phone to that instance.
 
 ### 1. Turn on the API server on your instance
 
-The app talks to the Hermes API-server platform, not the CLI. Enable it and note
-the key:
+The app talks to the Hermes Agent API-server platform, not the CLI. Enable it
+and note the key:
 
 ```bash
-# On the machine running Hermes:
+# On the machine running Hermes Agent:
 hermes gateway            # starts the gateway with the API server platform
 ```
 
@@ -99,8 +104,9 @@ the host (same Wi-Fi / tunnel up).
 
 - **Sessions** is the main event: your durable conversations, shared with the
   rest of Hermes. Create one with **+**, tap to open, long-lived history and all.
+- **Runs** drives longer background work with live tool-call control.
 - **Chat** is the throwaway scratchpad.
-- **Tools** shows what the instance can do.
+- **Tools**, **Jobs** and **Status** show and steer what the instance can do.
 
 ## Tech
 
@@ -112,6 +118,9 @@ the host (same Wi-Fi / tunnel up).
 - Pure, Android-free `core/` + `dto/` (state reducers, SSE parser, DTO mappers)
   covered by JVM unit tests; UI/ViewModels/crypto verified in CI.
 - English + Indonesian localization; adding a locale is "add one file."
+
+The app id stays `com.a9ito.hermesagent` for install/update continuity across
+releases, even though the app is branded Hermes Droid.
 
 ## Build
 
@@ -131,3 +140,8 @@ repository secrets and is never committed.
 
 Only the latest release is guaranteed working — older tags marked
 "⚠️ BROKEN" in their notes should not be used.
+
+## License
+
+Released under the [MIT License](LICENSE) — free to use, modify and
+redistribute, no warranty.
