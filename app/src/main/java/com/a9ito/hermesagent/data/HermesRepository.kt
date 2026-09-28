@@ -12,6 +12,7 @@ import com.a9ito.hermesagent.data.remote.ErrorMapper
 import com.a9ito.hermesagent.data.remote.HermesApi
 import com.a9ito.hermesagent.data.remote.SessionChatStreamer
 import com.a9ito.hermesagent.data.remote.SessionStreamEvent
+import com.a9ito.hermesagent.data.remote.HttpStatusException
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
 import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
@@ -23,8 +24,8 @@ import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.SessionChatRequest
 import com.a9ito.hermesagent.data.remote.dto.SkillDto
 import com.a9ito.hermesagent.data.remote.dto.ToolsetDto
-import com.a9ito.hermesagent.data.remote.dto.UpdateJobRequest
 import com.a9ito.hermesagent.data.remote.dto.toDisplayMessages
+import com.a9ito.hermesagent.data.remote.dto.toDomain
 import com.a9ito.hermesagent.data.remote.dto.toDomainJobs
 import com.a9ito.hermesagent.data.remote.dto.toSummary
 import kotlinx.coroutines.flow.Flow
