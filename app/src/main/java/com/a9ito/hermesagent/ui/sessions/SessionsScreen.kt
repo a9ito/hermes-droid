@@ -122,15 +122,16 @@ private fun SessionsContent(
 ) {
     var confirmDelete by remember { mutableStateOf<SessionSummary?>(null) }
     var renaming by remember { mutableStateOf<SessionSummary?>(null) }
+    val errorKind = state.errorKind
 
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
         when {
             state.loading && state.sessions.isEmpty() ->
                 CenteredMessage { CircularProgressIndicator() }
-            state.errorKind != null && state.sessions.isEmpty() ->
+            errorKind != null && state.sessions.isEmpty() ->
                 CenteredMessage {
                     Text(
-                        stringResource(R.string.sessions_error_prefix, stringResource(state.errorKind.messageRes())),
+                        stringResource(R.string.sessions_error_prefix, stringResource(errorKind.messageRes())),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

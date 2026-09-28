@@ -89,13 +89,14 @@ fun ToolsScreen(
                 )
             }
 
+            val err = state.errorKind
             when {
                 state.loading ->
                     Centered { CircularProgressIndicator() }
-                state.errorKind != null ->
+                err != null ->
                     Centered {
                         Text(
-                            stringResource(R.string.status_error_prefix, stringResource(state.errorKind.messageRes())),
+                            stringResource(R.string.status_error_prefix, stringResource(err.messageRes())),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
