@@ -289,6 +289,30 @@ class HermesRepository(
         }
     }
 
+    /** Pin or unpin a session (floats it to the top of the list on every surface). */
+    suspend fun setSessionPinned(config: ConnectionConfig, id: String, pinned: Boolean): ApiResult<SessionSummary> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).patchSession(id, PatchSessionRequest(pinned = pinned))
+            val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(session.toSummary())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /** Archive or unarchive a session (archived rows are hidden from the default list). */
+    suspend fun setSessionArchived(config: ConnectionConfig, id: String, archived: Boolean): ApiResult<SessionSummary> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).patchSession(id, PatchSessionRequest(archived = archived))
+            val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(session.toSummary())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
     suspend fun sessionMessages(config: ConnectionConfig, id: String): ApiResult<List<SessionMessage>> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {

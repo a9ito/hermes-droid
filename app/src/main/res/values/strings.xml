@@ -32,6 +32,13 @@
     <string name="sessions_fork_badge">fork</string>
     <string name="sessions_rename_action">Rename</string>
     <string name="sessions_fork_action">Fork</string>
+    <string name="sessions_pin_action">Pin</string>
+    <string name="sessions_unpin_action">Unpin</string>
+    <string name="sessions_pinned_badge">PINNED</string>
+    <string name="sessions_archive_action">Archive</string>
+    <string name="sessions_archive_title">Archive session?</string>
+    <string name="sessions_archive_message">\"%1$s\" will be hidden from this list. It stays on your instance and can be restored from the desktop.</string>
+    <string name="sessions_archive_confirm">Archive</string>
     <string name="sessions_rename_title">Rename session</string>
     <string name="sessions_rename_confirm">Rename</string>
     <string name="sessions_delete_title">Delete session?</string>

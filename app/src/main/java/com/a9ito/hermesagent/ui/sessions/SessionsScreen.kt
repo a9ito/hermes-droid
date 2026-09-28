@@ -107,6 +107,8 @@ fun SessionsScreen(
             onDelete = viewModel::delete,
             onFork = viewModel::fork,
             onRename = viewModel::rename,
+            onTogglePin = viewModel::togglePin,
+            onArchive = viewModel::archive,
         )
     }
 }
@@ -119,8 +121,11 @@ private fun SessionsContent(
     onDelete: (String) -> Unit,
     onFork: (String) -> Unit,
     onRename: (String, String) -> Unit,
+    onTogglePin: (String, Boolean) -> Unit,
+    onArchive: (String) -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf<SessionSummary?>(null) }
+    var confirmArchive by remember { mutableStateOf<SessionSummary?>(null) }
     var renaming by remember { mutableStateOf<SessionSummary?>(null) }
     val errorKind = state.errorKind
 
@@ -154,6 +159,8 @@ private fun SessionsContent(
                         onDelete = { confirmDelete = session },
                         onFork = { onFork(session.id) },
                         onRename = { renaming = session },
+                        onTogglePin = { onTogglePin(session.id, session.pinned) },
+                        onArchive = { confirmArchive = session },
                     )
                 }
             }
@@ -172,6 +179,22 @@ private fun SessionsContent(
             },
             dismissButton = {
                 TextButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.action_dismiss)) }
+            },
+        )
+    }
+
+    confirmArchive?.let { session ->
+        AlertDialog(
+            onDismissRequest = { confirmArchive = null },
+            title = { Text(stringResource(R.string.sessions_archive_title)) },
+            text = { Text(stringResource(R.string.sessions_archive_message, session.title)) },
+            confirmButton = {
+                TextButton(onClick = { onArchive(session.id); confirmArchive = null }) {
+                    Text(stringResource(R.string.sessions_archive_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmArchive = null }) { Text(stringResource(R.string.action_dismiss)) }
             },
         )
     }
@@ -208,6 +231,8 @@ private fun SessionRow(
     onDelete: () -> Unit,
     onFork: () -> Unit,
     onRename: () -> Unit,
+    onTogglePin: () -> Unit,
+    onArchive: () -> Unit,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -217,6 +242,14 @@ private fun SessionRow(
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                if (session.pinned) {
+                    Text(
+                        text = stringResource(R.string.sessions_pinned_badge),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 6.dp),
+                    )
+                }
                 Text(
                     text = session.title,
                     style = MaterialTheme.typography.titleSmall,
@@ -240,8 +273,14 @@ private fun SessionRow(
                 Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onTogglePin) {
+                    Text(stringResource(
+                        if (session.pinned) R.string.sessions_unpin_action else R.string.sessions_pin_action
+                    ))
+                }
                 TextButton(onClick = onRename) { Text(stringResource(R.string.sessions_rename_action)) }
                 TextButton(onClick = onFork) { Text(stringResource(R.string.sessions_fork_action)) }
+                TextButton(onClick = onArchive) { Text(stringResource(R.string.sessions_archive_action)) }
             }
         }
     }

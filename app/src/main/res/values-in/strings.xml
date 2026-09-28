@@ -32,6 +32,13 @@
     <string name="sessions_fork_badge">cabang</string>
     <string name="sessions_rename_action">Ganti nama</string>
     <string name="sessions_fork_action">Cabang</string>
+    <string name="sessions_pin_action">Sematkan</string>
+    <string name="sessions_unpin_action">Lepas sematan</string>
+    <string name="sessions_pinned_badge">DISEMAT</string>
+    <string name="sessions_archive_action">Arsipkan</string>
+    <string name="sessions_archive_title">Arsipkan sesi?</string>
+    <string name="sessions_archive_message">\"%1$s\" akan disembunyikan dari daftar ini. Sesi tetap tersimpan di instance-mu dan bisa dipulihkan dari desktop.</string>
+    <string name="sessions_archive_confirm">Arsipkan</string>
     <string name="sessions_rename_title">Ganti nama sesi</string>
     <string name="sessions_rename_confirm">Ganti nama</string>
     <string name="sessions_delete_title">Hapus sesi?</string>
