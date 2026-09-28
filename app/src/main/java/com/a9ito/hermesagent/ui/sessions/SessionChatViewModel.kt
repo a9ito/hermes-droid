@@ -8,6 +8,7 @@ import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.SessionMessage
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
@@ -32,8 +33,10 @@ data class SessionChatUiState(
     val errorKind: ErrorKind? = null,
     /** Model currently locked for this session, if any (shown in the app bar). */
     val model: String? = null,
-    /** Model ids offered by the instance, for the per-session picker. */
+    /** Model ids offered by the instance, for the per-session picker (flat fallback). */
     val availableModels: List<String> = emptyList(),
+    /** Rich provider catalog when the instance advertises model_options; null otherwise. */
+    val modelOptions: ModelOptions? = null,
 )
 
 /**
@@ -82,9 +85,18 @@ class SessionChatViewModel(
                 _state.update { it.copy(model = res.data.model) }
             }
         }
+        // Prefer the rich /api/model/options catalog; fall back to the flat /v1/models
+        // id list when the instance doesn't advertise model_options (older gateway
+        // returns 404/500 -> we just keep the flat list).
         viewModelScope.launch {
-            (repository.fetchModels(config) as? ApiResult.Success)?.let { res ->
-                _state.update { it.copy(availableModels = res.data) }
+            when (val opts = repository.fetchModelOptions(config)) {
+                is ApiResult.Success -> _state.update { it.copy(modelOptions = opts.data) }
+                is ApiResult.Failure -> Unit
+            }
+            if (_state.value.modelOptions?.isEmpty != false) {
+                (repository.fetchModels(config) as? ApiResult.Success)?.let { res ->
+                    _state.update { it.copy(availableModels = res.data) }
+                }
             }
         }
     }

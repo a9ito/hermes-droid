@@ -54,6 +54,7 @@ import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.ChatMessage
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.ui.common.ImageAttachmentLoader
 import com.a9ito.hermesagent.ui.messageRes
 import kotlinx.coroutines.launch
@@ -94,7 +95,8 @@ fun SessionChatScreen(
                     }
                 },
                 actions = {
-                    if (state.availableModels.isNotEmpty()) {
+                    val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+                    if (hasPicker) {
                         TextButton(onClick = { showModelPicker = true }) {
                             Text(stringResource(R.string.session_model_pick))
                         }
@@ -105,7 +107,8 @@ fun SessionChatScreen(
     ) { innerPadding ->
         if (showModelPicker) {
             ModelPickerDialog(
-                models = state.availableModels,
+                modelOptions = state.modelOptions,
+                flatModels = state.availableModels,
                 current = state.model,
                 onPick = { showModelPicker = false; viewModel.selectModel(it) },
                 onDismiss = { showModelPicker = false },
@@ -308,10 +311,15 @@ private fun InputBar(
     }
 }
 
-/** Simple single-choice model picker: tap a model to lock the session to it. */
+/**
+ * Model picker. When the instance exposes the rich /api/model/options catalog,
+ * models are grouped by provider with capability + pricing hints and
+ * unavailable/needs-auth states; otherwise it falls back to the flat id list.
+ */
 @Composable
 private fun ModelPickerDialog(
-    models: List<String>,
+    modelOptions: ModelOptions?,
+    flatModels: List<String>,
     current: String?,
     onPick: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -320,26 +328,100 @@ private fun ModelPickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.session_model_title)) },
         text = {
-            Column {
-                models.forEach { model ->
-                    val selected = model == current
-                    Surface(
-                        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-                        shape = MaterialTheme.shapes.small,
-                        onClick = { onPick(model) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = model,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        )
-                    }
-                }
+            if (modelOptions != null && !modelOptions.isEmpty) {
+                RichModelList(modelOptions, current, onPick)
+            } else {
+                FlatModelList(flatModels, current, onPick)
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_dismiss)) }
         },
     )
+}
+
+@Composable
+private fun RichModelList(options: ModelOptions, current: String?, onPick: (String) -> Unit) {
+    LazyColumn {
+        options.providers.forEach { provider ->
+            item(key = "hdr_${provider.slug}") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = provider.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    if (provider.freeTier) {
+                        Text(stringResource(R.string.model_free_tier), style = MaterialTheme.typography.labelSmall)
+                    }
+                    if (provider.needsAuth) {
+                        Text(stringResource(R.string.model_needs_key), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+            items(provider.models, key = { "${provider.slug}/${it.id}" }) { model ->
+                val selectable = !model.unavailable && !provider.needsAuth
+                val selected = model.id == current
+                Surface(
+                    color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                    shape = MaterialTheme.shapes.small,
+                    onClick = { if (selectable) onPick(model.id) },
+                    enabled = selectable,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Text(
+                            text = model.id,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (selectable) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        val hints = buildList {
+                            model.pricing?.let { p ->
+                                when {
+                                    p.free -> add(stringResource(R.string.model_price_free))
+                                    p.input != null || p.output != null ->
+                                        add(stringResource(R.string.model_price_io, p.input ?: "?", p.output ?: "?"))
+                                }
+                            }
+                            if (model.supportsReasoning) add(stringResource(R.string.model_reasoning))
+                            if (model.supportsFastMode) add(stringResource(R.string.model_fast))
+                            if (model.unavailable) add(stringResource(R.string.model_unavailable))
+                        }
+                        if (hints.isNotEmpty()) {
+                            Text(
+                                text = hints.joinToString(" · "),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlatModelList(models: List<String>, current: String?, onPick: (String) -> Unit) {
+    Column {
+        models.forEach { model ->
+            val selected = model == current
+            Surface(
+                color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                shape = MaterialTheme.shapes.small,
+                onClick = { onPick(model) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = model,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                )
+            }
+        }
+    }
 }

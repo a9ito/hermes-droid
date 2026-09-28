@@ -41,6 +41,14 @@
     <string name="session_chat_title">Session</string>
     <string name="session_model_pick">Model</string>
     <string name="session_model_title">Model for this session</string>
+    <!-- Rich model picker (from /api/model/options) -->
+    <string name="model_free_tier">free tier</string>
+    <string name="model_needs_key">needs key</string>
+    <string name="model_price_free">free</string>
+    <string name="model_price_io">in %1$s / out %2$s</string>
+    <string name="model_reasoning">reasoning</string>
+    <string name="model_fast">fast</string>
+    <string name="model_unavailable">unavailable on this tier</string>
 
     <!-- ============================ Tools screen ============================ -->
     <string name="tools_tab_skills">Skills</string>
