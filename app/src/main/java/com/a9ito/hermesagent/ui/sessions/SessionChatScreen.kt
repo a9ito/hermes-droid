@@ -55,6 +55,7 @@ import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ModelOptions
+import com.a9ito.hermesagent.core.ToolActivity
 import com.a9ito.hermesagent.ui.common.ImageAttachmentLoader
 import com.a9ito.hermesagent.ui.messageRes
 import kotlinx.coroutines.launch
@@ -171,25 +172,34 @@ private fun MessageBubble(message: ChatMessage) {
             text = stringResource(if (isUser) R.string.chat_sender_you else R.string.chat_sender_agent),
             style = MaterialTheme.typography.labelSmall,
         )
-        Surface(
-            color = bubbleColor,
-            shape = MaterialTheme.shapes.large,
-            modifier = Modifier.widthIn(max = 320.dp),
-        ) {
-            val shown = when {
-                message.error -> stringResource(
-                    R.string.chat_error_prefix,
-                    stringResource((message.errorKind ?: com.a9ito.hermesagent.core.ErrorKind.UNEXPECTED).messageRes()),
+        // Live agent activity for this turn: reasoning indicator, tool run rows,
+        // and mid-turn commentary — shown above the answer bubble (assistant only).
+        if (!isUser) {
+            ActivityTrail(message)
+        }
+        val hasBubbleText = message.error || message.text.isNotEmpty() ||
+            (message.streaming && message.activities.isEmpty() && message.commentary.isEmpty())
+        if (hasBubbleText) {
+            Surface(
+                color = bubbleColor,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.widthIn(max = 320.dp),
+            ) {
+                val shown = when {
+                    message.error -> stringResource(
+                        R.string.chat_error_prefix,
+                        stringResource((message.errorKind ?: com.a9ito.hermesagent.core.ErrorKind.UNEXPECTED).messageRes()),
+                    )
+                    message.text.isEmpty() && message.streaming -> stringResource(R.string.chat_thinking)
+                    else -> message.text
+                }
+                Text(
+                    text = shown,
+                    color = textColor,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 )
-                message.text.isEmpty() && message.streaming -> stringResource(R.string.chat_thinking)
-                else -> message.text
             }
-            Text(
-                text = shown,
-                color = textColor,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            )
         }
         if (message.attachmentCount > 0) {
             Text(
@@ -197,6 +207,57 @@ private fun MessageBubble(message: ChatMessage) {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+/**
+ * The agent's live "what am I doing" trail for one assistant turn: a thinking
+ * chip while reasoning, one row per tool call with a status glyph, and any
+ * mid-turn commentary. Renders nothing when the turn had no activity, so a
+ * plain text answer looks exactly as before.
+ */
+@Composable
+private fun ActivityTrail(message: ChatMessage) {
+    val thinking = message.thinking && message.text.isEmpty()
+    if (!thinking && message.activities.isEmpty() && message.commentary.isEmpty()) return
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.widthIn(max = 320.dp).padding(vertical = 2.dp),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            if (thinking) {
+                Text(
+                    text = stringResource(R.string.chat_reasoning),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            message.activities.forEach { activity ->
+                val glyph = when (activity.status) {
+                    ToolActivity.Status.RUNNING -> "•"
+                    ToolActivity.Status.DONE -> "✓"
+                    ToolActivity.Status.FAILED -> "✕"
+                }
+                val tint = when (activity.status) {
+                    ToolActivity.Status.FAILED -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                Text(
+                    text = "$glyph ${activity.toolName}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = tint,
+                )
+            }
+            message.commentary.forEach { line ->
+                Text(
+                    text = line,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
         }
     }
 }

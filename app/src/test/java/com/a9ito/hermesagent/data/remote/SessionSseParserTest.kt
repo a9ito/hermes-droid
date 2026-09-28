@@ -66,11 +66,39 @@ class SessionSseParserTest {
             listOf(
                 "event: run.started",
                 """data: {"user_message":{"role":"user","content":"hi"}}""",
-                "event: tool.progress",
-                """data: {"tool_name":"terminal"}""",
+                "event: message.started",
+                """data: {"message":{"id":"m1"}}""",
             )
         )
         assertTrue(events.all { it is SessionStreamEvent.Ignored })
+    }
+
+    @Test fun toolProgressIsThinking() {
+        val events = feed(listOf("event: tool.progress", """data: {"tool_name":"_thinking","delta":"hmm"}"""))
+        assertTrue(events.single() is SessionStreamEvent.Thinking)
+    }
+
+    @Test fun toolLifecycleFramesDecode() {
+        val events = feed(
+            listOf(
+                "event: tool.started",
+                """data: {"tool_name":"terminal"}""",
+                "event: tool.completed",
+                """data: {"tool_name":"terminal"}""",
+                "event: tool.failed",
+                """data: {"tool_name":"web_search"}""",
+            )
+        )
+        assertEquals("terminal", events.filterIsInstance<SessionStreamEvent.ToolStarted>().single().toolName)
+        assertEquals("terminal", events.filterIsInstance<SessionStreamEvent.ToolCompleted>().single().toolName)
+        assertEquals("web_search", events.filterIsInstance<SessionStreamEvent.ToolFailed>().single().toolName)
+    }
+
+    @Test fun commentaryCarriesTextAndEmptyIsIgnored() {
+        val withText = feed(listOf("event: assistant.commentary", """data: {"text":"let me check"}"""))
+        assertEquals("let me check", withText.filterIsInstance<SessionStreamEvent.Commentary>().single().text)
+        val empty = feed(listOf("event: assistant.commentary", """data: {"text":""}"""))
+        assertTrue(empty.single() is SessionStreamEvent.Ignored)
     }
 
     @Test fun deltaWithoutContentKeyIsEmptyNotCrash() {

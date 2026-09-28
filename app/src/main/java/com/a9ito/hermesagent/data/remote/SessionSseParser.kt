@@ -19,9 +19,19 @@ sealed interface SessionStreamEvent {
     data class Completed(val content: String) : SessionStreamEvent
     /** Server-reported failure (event: error -> {"message": "..."}). */
     data class Failed(val message: String) : SessionStreamEvent
+    /** Reasoning/thinking progress (event: tool.progress with tool_name "_thinking"). */
+    data object Thinking : SessionStreamEvent
+    /** A tool began running (event: tool.started -> {"tool_name": "..."}). */
+    data class ToolStarted(val toolName: String) : SessionStreamEvent
+    /** A tool finished (event: tool.completed -> {"tool_name": "..."}). */
+    data class ToolCompleted(val toolName: String) : SessionStreamEvent
+    /** A tool failed (event: tool.failed -> {"tool_name": "..."}). */
+    data class ToolFailed(val toolName: String) : SessionStreamEvent
+    /** Mid-turn assistant commentary beside tool calls (event: assistant.commentary). */
+    data class Commentary(val text: String) : SessionStreamEvent
     /** Stream finished (event: done, or data: [DONE]). */
     data object Done : SessionStreamEvent
-    /** A frame we don't render (run.*, tool.progress, message.started, keepalive). */
+    /** A frame we don't render (run.*, message.started, keepalive). */
     data object Ignored : SessionStreamEvent
 }
 
@@ -62,6 +72,15 @@ class SessionSseParser(
         return when (name) {
             "assistant.delta" -> SessionStreamEvent.Delta(str("delta"))
             "assistant.completed" -> SessionStreamEvent.Completed(str("content"))
+            "assistant.commentary" -> str("text").let {
+                if (it.isEmpty()) SessionStreamEvent.Ignored else SessionStreamEvent.Commentary(it)
+            }
+            // Server folds reasoning.available into a tool.progress frame; the app
+            // treats any tool.progress as "the agent is thinking".
+            "tool.progress" -> SessionStreamEvent.Thinking
+            "tool.started" -> SessionStreamEvent.ToolStarted(str("tool_name"))
+            "tool.completed" -> SessionStreamEvent.ToolCompleted(str("tool_name"))
+            "tool.failed" -> SessionStreamEvent.ToolFailed(str("tool_name"))
             "error" -> SessionStreamEvent.Failed(str("message"))
             "done" -> SessionStreamEvent.Done
             else -> SessionStreamEvent.Ignored
