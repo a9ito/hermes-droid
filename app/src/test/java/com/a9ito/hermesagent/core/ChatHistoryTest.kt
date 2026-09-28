@@ -67,4 +67,64 @@ class ChatHistoryTest {
         assertTrue(newAssistant >= 3)
         assertEquals(2, h1.messages.size)
     }
+
+    @Test fun thinkingSetsOnlyWhileTextEmpty() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val thinking = h0.setThinking(id, true)
+        assertTrue(thinking.messages.first { it.id == id }.thinking)
+        // Once text arrives, a stale thinking flag can't turn back on.
+        val answered = thinking.appendDelta(id, "hi")
+        assertFalse(answered.messages.first { it.id == id }.thinking)
+        val reattempt = answered.setThinking(id, true)
+        assertFalse(reattempt.messages.first { it.id == id }.thinking)
+    }
+
+    @Test fun toolStartedThenCompletedTracksStatus() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val running = h0.setThinking(id, true).toolStarted(id, "terminal")
+        val m1 = running.messages.first { it.id == id }
+        assertFalse(m1.thinking) // a concrete tool ends the thinking state
+        assertEquals(1, m1.activities.size)
+        assertEquals(ToolActivity.Status.RUNNING, m1.activities[0].status)
+
+        val done = running.toolFinished(id, "terminal", ToolActivity.Status.DONE)
+        assertEquals(ToolActivity.Status.DONE, done.messages.first { it.id == id }.activities[0].status)
+    }
+
+    @Test fun duplicateToolStartIsNotDoubleCounted() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val once = h0.toolStarted(id, "terminal")
+        val twice = once.toolStarted(id, "terminal")
+        assertEquals(1, twice.messages.first { it.id == id }.activities.size)
+    }
+
+    @Test fun twoDistinctToolsBothTracked() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val h1 = h0.toolStarted(id, "terminal").toolStarted(id, "web_search")
+            .toolFinished(id, "terminal", ToolActivity.Status.DONE)
+            .toolFinished(id, "web_search", ToolActivity.Status.FAILED)
+        val acts = h1.messages.first { it.id == id }.activities
+        assertEquals(2, acts.size)
+        assertEquals(ToolActivity.Status.DONE, acts.first { it.toolName == "terminal" }.status)
+        assertEquals(ToolActivity.Status.FAILED, acts.first { it.toolName == "web_search" }.status)
+    }
+
+    @Test fun toolFinishedForUnknownToolIsNoop() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val h1 = h0.toolFinished(id, "never_started", ToolActivity.Status.DONE)
+        assertTrue(h1.messages.first { it.id == id }.activities.isEmpty())
+    }
+
+    @Test fun commentaryAccumulatesInOrder() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val h1 = h0.appendCommentary(id, "first").appendCommentary(id, "second")
+        assertEquals(listOf("first", "second"), h1.messages.first { it.id == id }.commentary)
+    }
+
+    @Test fun finishAndFailClearThinking() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val thinking = h0.setThinking(id, true)
+        assertFalse(thinking.finish(id).messages.first { it.id == id }.thinking)
+        assertFalse(thinking.fail(id, ErrorKind.NETWORK).messages.first { it.id == id }.thinking)
+    }
 }

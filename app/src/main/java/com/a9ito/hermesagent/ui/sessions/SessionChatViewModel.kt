@@ -10,6 +10,7 @@ import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.SessionMessage
+import com.a9ito.hermesagent.core.ToolActivity
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
 import com.a9ito.hermesagent.data.remote.SessionStreamEvent
@@ -151,6 +152,16 @@ class SessionChatViewModel(
                                 val current = it.history.messages.firstOrNull { m -> m.id == assistantId }?.text.orEmpty()
                                 if (current.isEmpty()) it.copy(history = it.history.setText(assistantId, event.content)) else it
                             }
+                        SessionStreamEvent.Thinking ->
+                            _state.update { it.copy(history = it.history.setThinking(assistantId, true)) }
+                        is SessionStreamEvent.ToolStarted ->
+                            _state.update { it.copy(history = it.history.toolStarted(assistantId, event.toolName)) }
+                        is SessionStreamEvent.ToolCompleted ->
+                            _state.update { it.copy(history = it.history.toolFinished(assistantId, event.toolName, ToolActivity.Status.DONE)) }
+                        is SessionStreamEvent.ToolFailed ->
+                            _state.update { it.copy(history = it.history.toolFinished(assistantId, event.toolName, ToolActivity.Status.FAILED)) }
+                        is SessionStreamEvent.Commentary ->
+                            _state.update { it.copy(history = it.history.appendCommentary(assistantId, event.text)) }
                         is SessionStreamEvent.Failed ->
                             throw SessionStreamFailure(event.message)
                         SessionStreamEvent.Done, SessionStreamEvent.Ignored -> Unit

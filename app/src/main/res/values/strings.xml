@@ -167,6 +167,7 @@
     <string name="chat_sender_you">You</string>
     <string name="chat_sender_agent">Agent</string>
     <string name="chat_thinking">Agent is thinking…</string>
+    <string name="chat_reasoning">Reasoning…</string>
     <string name="chat_error_prefix">Error: %1$s</string>
     <string name="chat_clear_history">Clear conversation</string>
     <string name="chat_history_cleared">Conversation cleared</string>
