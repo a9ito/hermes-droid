@@ -28,5 +28,6 @@ enum class ErrorKind {
     AUTH,
     NETWORK,
     TIMEOUT,
+    SERVER_ERROR,
     UNEXPECTED,
 }

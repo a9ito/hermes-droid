@@ -220,6 +220,7 @@
     <string name="error_network">Network error. Check the host, port, and that the gateway is running.</string>
     <string name="error_auth">Authentication failed. Check your API token.</string>
     <string name="error_timeout">The request timed out.</string>
+    <string name="error_server">The instance hit a server-side error. This is a problem on the instance, not the app. Check the gateway logs.</string>
     <string name="error_unexpected">Unexpected error.</string>
     <string name="action_retry">Retry</string>
     <string name="action_dismiss">Dismiss</string>
