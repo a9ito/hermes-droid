@@ -205,10 +205,22 @@ class SessionChatViewModel(
 private fun List<SessionMessage>.toHistory(): ChatHistory {
     var history = ChatHistory()
     for (m in this) {
-        val role = if (m.role == SessionMessage.Role.USER) ChatMessage.Role.USER else ChatMessage.Role.ASSISTANT
-        val text = if (m.role == SessionMessage.Role.TOOL && m.toolName != null) "[tool: ${m.toolName}]" else m.text
-        if (text.isBlank()) continue
-        history = history.appendFinal(role, text)
+        when (m.role) {
+            SessionMessage.Role.USER -> {
+                if (m.text.isNotBlank()) history = history.appendFinal(ChatMessage.Role.USER, m.text)
+            }
+            SessionMessage.Role.TOOL -> {
+                val label = m.toolName?.let { "[tool: $it]" } ?: m.text
+                if (label.isNotBlank()) history = history.appendFinal(ChatMessage.Role.ASSISTANT, label)
+            }
+            else -> {
+                // Assistant / other: keep the turn if it has text OR captured reasoning,
+                // so a reasoning-only row still surfaces the collapsible thinking.
+                if (m.text.isNotBlank() || !m.reasoning.isNullOrBlank()) {
+                    history = history.appendFinalWithReasoning(m.text, m.reasoning)
+                }
+            }
+        }
     }
     return history
 }

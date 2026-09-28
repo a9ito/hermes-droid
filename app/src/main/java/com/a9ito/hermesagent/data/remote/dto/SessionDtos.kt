@@ -88,6 +88,10 @@ data class SessionMessageDto(
     val timestamp: Double? = null,
     @SerialName("finish_reason") val finishReason: String? = null,
     @SerialName("display_kind") val displayKind: String? = null,
+    // Persisted reasoning/thinking for an assistant turn. `reasoning` and
+    // `reasoning_content` carry the same text on this server; prefer `reasoning`.
+    val reasoning: String? = null,
+    @SerialName("reasoning_content") val reasoningContent: String? = null,
 )
 
 @Serializable

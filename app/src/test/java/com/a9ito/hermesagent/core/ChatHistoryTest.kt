@@ -2,6 +2,7 @@ package com.a9ito.hermesagent.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -126,5 +127,18 @@ class ChatHistoryTest {
         val thinking = h0.setThinking(id, true)
         assertFalse(thinking.finish(id).messages.first { it.id == id }.thinking)
         assertFalse(thinking.fail(id, ErrorKind.NETWORK).messages.first { it.id == id }.thinking)
+    }
+
+    @Test fun appendFinalWithReasoningCarriesReasoning() {
+        val h = ChatHistory().appendFinalWithReasoning("the answer", "the thinking")
+        val m = h.messages.single()
+        assertEquals(ChatMessage.Role.ASSISTANT, m.role)
+        assertEquals("the answer", m.text)
+        assertEquals("the thinking", m.reasoning)
+    }
+
+    @Test fun appendFinalWithBlankReasoningIsNull() {
+        val h = ChatHistory().appendFinalWithReasoning("answer", "   ")
+        assertNull(h.messages.single().reasoning)
     }
 }

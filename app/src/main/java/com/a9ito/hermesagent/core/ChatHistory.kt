@@ -21,6 +21,13 @@ data class ChatHistory(
     fun appendFinal(role: ChatMessage.Role, text: String): ChatHistory =
         ChatHistory(messages + ChatMessage(nextId, role, text), nextId + 1)
 
+    /** Append a completed assistant turn carrying reasoning (server-history replay). */
+    fun appendFinalWithReasoning(text: String, reasoning: String?): ChatHistory =
+        ChatHistory(
+            messages + ChatMessage(nextId, ChatMessage.Role.ASSISTANT, text, reasoning = reasoning?.takeIf { it.isNotBlank() }),
+            nextId + 1,
+        )
+
     /** Append a delta to the streaming assistant message [id]. */
     fun appendDelta(id: Long, delta: String): ChatHistory =
         copyMapping(id) { it.copy(text = it.text + delta, thinking = false) }
