@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.SessionSummary
+import com.a9ito.hermesagent.core.sortedForDisplay
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +59,7 @@ class SessionsViewModel(
         viewModelScope.launch {
             when (val res = repository.listSessions(config)) {
                 is ApiResult.Success ->
-                    _state.update { it.copy(loading = false, sessions = res.data, errorKind = null) }
+                    _state.update { it.copy(loading = false, sessions = res.data.sortedForDisplay(), errorKind = null) }
                 is ApiResult.Failure ->
                     _state.update { it.copy(loading = false, errorKind = res.kind) }
             }
@@ -106,6 +107,33 @@ class SessionsViewModel(
         if (!config.isComplete || title.isBlank()) return
         viewModelScope.launch {
             when (val res = repository.renameSession(config, id, title.trim())) {
+                is ApiResult.Success -> refresh()
+                is ApiResult.Failure -> _state.update { it.copy(errorKind = res.kind) }
+            }
+        }
+    }
+
+    /** Toggle pin: pass the session's CURRENT pinned state; we flip it. */
+    fun togglePin(id: String, currentlyPinned: Boolean) {
+        if (!config.isComplete) return
+        viewModelScope.launch {
+            when (val res = repository.setSessionPinned(config, id, !currentlyPinned)) {
+                is ApiResult.Success -> refresh()
+                is ApiResult.Failure -> _state.update { it.copy(errorKind = res.kind) }
+            }
+        }
+    }
+
+    /**
+     * Archive a session. Archived rows drop out of the default list (verified
+     * against the server: no include_archived surface exists on this endpoint),
+     * so this is effectively a soft-hide that keeps the transcript on the
+     * instance and reachable from desktop.
+     */
+    fun archive(id: String) {
+        if (!config.isComplete) return
+        viewModelScope.launch {
+            when (val res = repository.setSessionArchived(config, id, true)) {
                 is ApiResult.Success -> refresh()
                 is ApiResult.Failure -> _state.update { it.copy(errorKind = res.kind) }
             }

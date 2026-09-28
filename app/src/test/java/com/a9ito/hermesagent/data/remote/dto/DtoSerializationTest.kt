@@ -77,4 +77,22 @@ class DtoSerializationTest {
         assertTrue(encoded.contains("\"role\":\"user\""))
         assertTrue(encoded.contains("\"model\":\"hermes-agent\""))
     }
+
+    // The server's PATCH /api/sessions/{id} rejects a null pinned/archived with
+    // "'pinned' must be a boolean" (400). With explicitNulls=false the unset
+    // fields must be OMITTED entirely, not serialized as null — this pins that.
+    @Test fun patchPinnedOnlyOmitsTitleAndArchived() {
+        val encoded = json.encodeToString(PatchSessionRequest.serializer(), PatchSessionRequest(pinned = true))
+        assertEquals("""{"pinned":true}""", encoded)
+    }
+
+    @Test fun patchArchivedOnlyOmitsTitleAndPinned() {
+        val encoded = json.encodeToString(PatchSessionRequest.serializer(), PatchSessionRequest(archived = true))
+        assertEquals("""{"archived":true}""", encoded)
+    }
+
+    @Test fun patchTitleOnlyOmitsFlags() {
+        val encoded = json.encodeToString(PatchSessionRequest.serializer(), PatchSessionRequest(title = "renamed"))
+        assertEquals("""{"title":"renamed"}""", encoded)
+    }
 }
