@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window shell background; matches the M3 surface fallback closely enough
+         to avoid a flash before Compose draws. Light value here, dark in
+         values-night. -->
+    <color name="window_background">#FFFCF8F8</color>
+
+    <!-- Adaptive launcher icon background (a warm Hermes-ish plum). -->
+    <color name="ic_launcher_background">#FF5B4B8A</color>
+</resources>

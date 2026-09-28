@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   English (default) strings for Hermes Agent.
+
+   Adding a third locale is "add one file": copy this file to
+   values-<code>/strings.xml (e.g. values-ja, values-ar) and translate the
+   values. No code changes required — every user-facing string is referenced by
+   id from Kotlin/Compose, never hardcoded. RTL locales work automatically
+   because the UI uses layout-direction-aware start/end modifiers.
+-->
+<resources>
+
+    <!-- App -->
+    <string name="app_name">Hermes Agent</string>
+
+    <!-- Bottom navigation / screen titles -->
+    <string name="nav_chat">Chat</string>
+    <string name="nav_sessions">Sessions</string>
+    <string name="nav_tools">Tools</string>
+    <string name="nav_status">Status</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- ============================ Sessions screen ============================ -->
+    <string name="sessions_new">New session</string>
+    <string name="sessions_empty_title">No sessions yet</string>
+    <string name="sessions_empty_subtitle">Tap + to start a persistent conversation. Sessions are stored on your instance and shared with every Hermes surface.</string>
+    <string name="sessions_message_count">%1$d messages</string>
+    <string name="sessions_fork_badge">fork</string>
+    <string name="sessions_rename_action">Rename</string>
+    <string name="sessions_fork_action">Fork</string>
+    <string name="sessions_rename_title">Rename session</string>
+    <string name="sessions_rename_confirm">Rename</string>
+    <string name="sessions_delete_title">Delete session?</string>
+    <string name="sessions_delete_message">\"%1$s\" and its transcript will be permanently deleted on the instance.</string>
+    <string name="sessions_delete_confirm">Delete</string>
+    <string name="sessions_error_prefix">Could not load sessions: %1$s</string>
+    <string name="sessions_locked_title">Connection required</string>
+    <string name="sessions_locked_subtitle">Add your host and API token in Settings to browse sessions.</string>
+    <string name="session_chat_title">Session</string>
+    <string name="session_model_pick">Model</string>
+    <string name="session_model_title">Model for this session</string>
+
+    <!-- ============================ Tools screen ============================ -->
+    <string name="tools_tab_skills">Skills</string>
+    <string name="tools_tab_toolsets">Toolsets</string>
+    <string name="tools_enabled">Enabled</string>
+    <string name="tools_disabled">Disabled</string>
+    <string name="tools_empty">Nothing to show.</string>
+    <string name="tools_locked_title">Connection required</string>
+    <string name="tools_locked_subtitle">Add your host and API token in Settings to view skills and toolsets.</string>
+
+    <!-- Shared actions -->
+    <string name="action_back">Back</string>
+
+    <!-- ============================ Settings screen ============================ -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_connection_header">Connection</string>
+    <string name="settings_connection_subtitle">Point the app at your running Hermes Agent API server.</string>
+
+    <string name="settings_host_label">Host or URL</string>
+    <string name="settings_host_placeholder">192.168.1.10 or https://my-host</string>
+    <string name="settings_host_supporting">IP, hostname, or full URL. http:// is assumed if no scheme is given.</string>
+
+    <string name="settings_port_label">Port</string>
+    <string name="settings_port_placeholder">8642</string>
+    <string name="settings_port_supporting">Default Hermes API server port is 8642. Leave blank if the URL already has one.</string>
+
+    <string name="settings_token_label">API token</string>
+    <string name="settings_token_placeholder">API_SERVER_KEY value</string>
+    <string name="settings_token_supporting">Sent as a Bearer token. Stored encrypted on this device and never logged.</string>
+    <string name="settings_token_show">Show token</string>
+    <string name="settings_token_hide">Hide token</string>
+
+    <string name="settings_save">Save</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_clear">Clear saved connection</string>
+    <string name="settings_cleared">Connection cleared</string>
+
+    <string name="settings_resolved_endpoint">Resolved endpoint: %1$s</string>
+    <string name="settings_error_host_required">Enter a host or URL.</string>
+    <string name="settings_error_token_required">Enter the API token.</string>
+    <string name="settings_error_port_invalid">Port must be a number between 1 and 65535.</string>
+    <string name="settings_error_host_invalid">That doesn\'t look like a valid host or URL.</string>
+
+    <!-- ============================ Chat screen ============================ -->
+    <string name="chat_title">Chat</string>
+    <string name="chat_input_hint">Message your agent…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_stop">Stop</string>
+    <string name="chat_empty_title">No messages yet</string>
+    <string name="chat_empty_subtitle">Send a message to start talking to your Hermes Agent instance.</string>
+    <string name="chat_sender_you">You</string>
+    <string name="chat_sender_agent">Agent</string>
+    <string name="chat_thinking">Agent is thinking…</string>
+    <string name="chat_error_prefix">Error: %1$s</string>
+    <string name="chat_clear_history">Clear conversation</string>
+    <string name="chat_history_cleared">Conversation cleared</string>
+
+    <!-- Gate shown when host/token are not configured yet -->
+    <string name="chat_locked_title">Connection required</string>
+    <string name="chat_locked_subtitle">Add your host and API token in Settings before you can chat.</string>
+    <string name="chat_locked_action">Open Settings</string>
+
+    <!-- ============================ Status screen ============================ -->
+    <string name="status_title">Status</string>
+    <string name="status_refresh">Refresh</string>
+    <string name="status_locked_title">Connection required</string>
+    <string name="status_locked_subtitle">Add your host and API token in Settings to see instance status.</string>
+    <string name="status_locked_action">Open Settings</string>
+
+    <string name="status_loading">Checking instance…</string>
+    <string name="status_reachable">Reachable</string>
+    <string name="status_unreachable">Unreachable</string>
+
+    <string name="status_field_state">Gateway state</string>
+    <string name="status_field_readiness">Readiness</string>
+    <string name="status_field_busy">Busy</string>
+    <string name="status_field_active_agents">Active agents</string>
+    <string name="status_field_model">Model</string>
+    <string name="status_field_version">Version</string>
+    <string name="status_field_platforms">Connected platforms</string>
+    <string name="status_field_updated">Updated</string>
+
+    <string name="status_value_yes">Yes</string>
+    <string name="status_value_no">No</string>
+    <string name="status_value_unknown">Unknown</string>
+    <string name="status_value_none">None</string>
+
+    <string name="status_error_prefix">Could not reach instance: %1$s</string>
+
+    <!-- ============================ Shared / errors ============================ -->
+    <string name="error_no_connection">No connection configured. Check Settings.</string>
+    <string name="error_network">Network error. Check the host, port, and that the gateway is running.</string>
+    <string name="error_auth">Authentication failed. Check your API token.</string>
+    <string name="error_timeout">The request timed out.</string>
+    <string name="error_unexpected">Unexpected error.</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_dismiss">Dismiss</string>
+
+    <!-- Content descriptions (accessibility) -->
+    <string name="cd_send_message">Send message</string>
+    <string name="cd_stop_generation">Stop generating</string>
+    <string name="cd_refresh_status">Refresh status</string>
+    <string name="cd_toggle_token_visibility">Toggle token visibility</string>
+
+</resources>

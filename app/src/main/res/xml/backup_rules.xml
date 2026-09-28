@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Cloud backup rules. The encrypted auth token lives in a DataStore file whose
+   encryption key is held in the Android Keystore and never leaves the device,
+   so a backed-up copy would be useless ciphertext. Exclude the datastore
+   directory entirely so no token material is ever uploaded.
+-->
+<full-backup-content>
+    <exclude domain="file" path="datastore/" />
+</full-backup-content>

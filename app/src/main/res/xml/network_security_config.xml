@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network security policy for Hermes Agent.
+
+    Hermes' API server speaks plain HTTP (it does not terminate TLS itself), and
+    users point this client at self-hosted instances by raw host:port — a
+    loopback 127.0.0.1 (Hermes in Termux on the same phone), a LAN IP such as
+    192.168.x.x, or an https:// reverse proxy / tunnel. Android 9+ (API 28+)
+    blocks cleartext HTTP by default, which otherwise makes every loopback/LAN
+    connection fail with "CLEARTEXT communication not permitted" before a single
+    packet leaves the app.
+
+    We therefore permit cleartext app-wide so the common self-hosted setups work
+    out of the box.
+
+    SECURITY NOTE: plain HTTP has no transport encryption or authentication of
+    the server. On untrusted or public networks, run Hermes behind an HTTPS
+    reverse proxy or a private tunnel (Tailscale, WireGuard, SSH) and point the
+    app at the https:// address. The bearer token is the only credential
+    protecting an endpoint that can run terminal commands — do not send it over
+    cleartext across a network you do not control.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
