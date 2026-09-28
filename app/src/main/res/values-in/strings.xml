@@ -54,6 +54,15 @@
     <!-- Aksi bersama -->
     <string name="action_back">Kembali</string>
 
+    <!-- Lampiran obrolan -->
+    <string name="chat_attach_add">Lampirkan gambar</string>
+    <string name="chat_attach_remove">Hapus lampiran</string>
+    <string name="chat_attach_image_generic">Gambar</string>
+    <string name="chat_attach_not_image">Hanya gambar yang bisa dilampirkan.</string>
+    <string name="chat_attach_too_large">Gambar terlalu besar (maks 4 MB).</string>
+    <string name="chat_attach_failed">Gagal membaca gambar itu.</string>
+    <string name="chat_attachment_badge">%1$d gambar dilampirkan</string>
+
     <!-- ============================ Layar Run ============================ -->
     <string name="runs_prompt_label">Minta agent melakukan sesuatu…</string>
     <string name="runs_submit">Mulai run</string>

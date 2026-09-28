@@ -102,10 +102,3 @@ data class ModelLockRequest(
     val model: String,
     val provider: String? = null,
 )
-
-/** POST /api/sessions/{id}/chat[/stream] request body. */
-@Serializable
-data class SessionChatRequest(
-    val message: String,
-    val model: String? = null,
-)

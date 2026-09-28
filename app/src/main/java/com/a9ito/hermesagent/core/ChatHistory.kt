@@ -10,8 +10,8 @@ data class ChatHistory(
     private val nextId: Long = 1,
 ) {
     /** Append a user turn plus an empty streaming assistant placeholder. */
-    fun startTurn(userText: String): Pair<ChatHistory, Long> {
-        val userMsg = ChatMessage(nextId, ChatMessage.Role.USER, userText)
+    fun startTurn(userText: String, attachmentCount: Int = 0): Pair<ChatHistory, Long> {
+        val userMsg = ChatMessage(nextId, ChatMessage.Role.USER, userText, attachmentCount = attachmentCount)
         val assistantId = nextId + 1
         val assistantMsg = ChatMessage(assistantId, ChatMessage.Role.ASSISTANT, "", streaming = true)
         return ChatHistory(messages + userMsg + assistantMsg, nextId + 2) to assistantId

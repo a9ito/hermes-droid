@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.a9ito.hermesagent.core.ChatHistory
+import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
@@ -25,6 +26,8 @@ data class SessionChatUiState(
     val loadingHistory: Boolean = false,
     val history: ChatHistory = ChatHistory(),
     val input: String = "",
+    /** Images staged for the next turn (cleared on send). */
+    val pendingAttachments: List<ChatAttachment> = emptyList(),
     val sending: Boolean = false,
     val errorKind: ErrorKind? = null,
     /** Model currently locked for this session, if any (shown in the app bar). */
@@ -100,19 +103,33 @@ class SessionChatViewModel(
     fun onInputChange(value: String) = _state.update { it.copy(input = value) }
     fun consumeError() = _state.update { it.copy(errorKind = null) }
 
+    /** Stage an image for the next turn (dedup + cap enforced). */
+    fun addAttachment(attachment: ChatAttachment) = _state.update {
+        if (it.pendingAttachments.size >= ChatAttachment.MAX_PER_TURN) it
+        else it.copy(pendingAttachments = it.pendingAttachments + attachment)
+    }
+
+    fun removeAttachment(index: Int) = _state.update {
+        if (index !in it.pendingAttachments.indices) it
+        else it.copy(pendingAttachments = it.pendingAttachments.filterIndexed { i, _ -> i != index })
+    }
+
     fun send() {
         val text = _state.value.input.trim()
-        if (text.isEmpty() || _state.value.sending) return
+        val attachments = _state.value.pendingAttachments
+        if ((text.isEmpty() && attachments.isEmpty()) || _state.value.sending) return
         if (!config.isComplete) {
             _state.update { it.copy(errorKind = ErrorKind.NO_CONNECTION) }
             return
         }
-        val (newHistory, assistantId) = _state.value.history.startTurn(text)
-        _state.update { it.copy(history = newHistory, input = "", sending = true, errorKind = null) }
+        val (newHistory, assistantId) = _state.value.history.startTurn(text, attachmentCount = attachments.size)
+        _state.update {
+            it.copy(history = newHistory, input = "", pendingAttachments = emptyList(), sending = true, errorKind = null)
+        }
 
         streamJob = viewModelScope.launch {
             try {
-                repository.streamSessionChat(config, sessionId, text).collect { event ->
+                repository.streamSessionChat(config, sessionId, text, attachments).collect { event ->
                     when (event) {
                         is SessionStreamEvent.Delta ->
                             _state.update { it.copy(history = it.history.appendDelta(assistantId, event.text)) }

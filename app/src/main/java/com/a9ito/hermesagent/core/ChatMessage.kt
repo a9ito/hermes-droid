@@ -14,6 +14,8 @@ data class ChatMessage(
     val streaming: Boolean = false,
     val error: Boolean = false,
     val errorKind: ErrorKind? = null,
+    /** Number of images the user attached to this turn (display badge only). */
+    val attachmentCount: Int = 0,
 ) {
     enum class Role { USER, ASSISTANT }
 }
