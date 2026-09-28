@@ -27,6 +27,10 @@ data class SessionChatUiState(
     val input: String = "",
     val sending: Boolean = false,
     val errorKind: ErrorKind? = null,
+    /** Model currently locked for this session, if any (shown in the app bar). */
+    val model: String? = null,
+    /** Model ids offered by the instance, for the per-session picker. */
+    val availableModels: List<String> = emptyList(),
 )
 
 /**
@@ -66,6 +70,29 @@ class SessionChatViewModel(
                     _state.update { it.copy(loadingHistory = false, history = res.data.toHistory()) }
                 is ApiResult.Failure ->
                     _state.update { it.copy(loadingHistory = false, errorKind = res.kind) }
+            }
+        }
+        // Session model + instance model list feed the per-session picker; failures
+        // are non-fatal (picker just stays empty), so they don't touch errorKind.
+        viewModelScope.launch {
+            (repository.sessionDetail(config, sessionId) as? ApiResult.Success)?.let { res ->
+                _state.update { it.copy(model = res.data.model) }
+            }
+        }
+        viewModelScope.launch {
+            (repository.fetchModels(config) as? ApiResult.Success)?.let { res ->
+                _state.update { it.copy(availableModels = res.data) }
+            }
+        }
+    }
+
+    /** Lock this session to [model] for subsequent turns. */
+    fun selectModel(model: String) {
+        if (!config.isComplete || model == _state.value.model) return
+        viewModelScope.launch {
+            when (val res = repository.lockSessionModel(config, sessionId, model)) {
+                is ApiResult.Success -> _state.update { it.copy(model = model) }
+                is ApiResult.Failure -> _state.update { it.copy(errorKind = res.kind) }
             }
         }
     }

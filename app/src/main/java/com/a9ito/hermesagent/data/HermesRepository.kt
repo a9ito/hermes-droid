@@ -140,6 +140,28 @@ class HermesRepository(
 
     fun classify(t: Throwable): ErrorKind = ErrorMapper.classify(t)
 
+    /** Available model ids from /v1/models (primary + configured route aliases). */
+    suspend fun fetchModels(config: ConnectionConfig): ApiResult<List<String>> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).models().data.map { it.id })
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /** One session's current metadata (used to show its locked model). */
+    suspend fun sessionDetail(config: ConnectionConfig, id: String): ApiResult<SessionSummary> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).getSession(id)
+            val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(session.toSummary())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
     // ---- Skills & Toolsets (read-only viewers) ----
 
     suspend fun fetchSkills(config: ConnectionConfig): ApiResult<List<SkillDto>> {

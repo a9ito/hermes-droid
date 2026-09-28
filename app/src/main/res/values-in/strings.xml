@@ -37,6 +37,8 @@
     <string name="sessions_locked_title">Butuh koneksi</string>
     <string name="sessions_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk menjelajahi sesi.</string>
     <string name="session_chat_title">Sesi</string>
+    <string name="session_model_pick">Model</string>
+    <string name="session_model_title">Model untuk sesi ini</string>
 
     <!-- ============================ Layar Alat ============================ -->
     <string name="tools_tab_skills">Skill</string>
