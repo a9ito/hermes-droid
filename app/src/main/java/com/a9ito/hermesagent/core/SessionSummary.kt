@@ -22,6 +22,8 @@ data class SessionMessage(
     val role: Role,
     val text: String,
     val toolName: String? = null,
+    /** Assistant reasoning/thinking captured for this turn, if any. */
+    val reasoning: String? = null,
 ) {
     enum class Role { USER, ASSISTANT, TOOL, SYSTEM, OTHER }
 }

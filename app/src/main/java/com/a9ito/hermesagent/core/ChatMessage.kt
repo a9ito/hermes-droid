@@ -22,6 +22,8 @@ data class ChatMessage(
     val thinking: Boolean = false,
     /** Mid-turn assistant commentary emitted beside tool calls (not yet in [text]). */
     val commentary: List<String> = emptyList(),
+    /** Full reasoning/thinking text for a completed assistant turn (collapsible). */
+    val reasoning: String? = null,
 ) {
     enum class Role { USER, ASSISTANT }
 }

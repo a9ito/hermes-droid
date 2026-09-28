@@ -208,6 +208,45 @@ private fun MessageBubble(message: ChatMessage) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // Collapsible reasoning for a completed assistant turn (server-history replay).
+        if (!isUser && !message.reasoning.isNullOrBlank()) {
+            ReasoningPanel(message.reasoning)
+        }
+    }
+}
+
+/**
+ * A collapsed-by-default "Reasoning" disclosure for a completed assistant turn.
+ * Tapping the header toggles the full thinking text. Kept separate from the live
+ * [ActivityTrail] (which shows in-progress reasoning) — this is the persisted,
+ * reviewable transcript version.
+ */
+@Composable
+private fun ReasoningPanel(reasoning: String) {
+    var expanded by rememberSaveable(reasoning) { mutableStateOf(false) }
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium,
+        onClick = { expanded = !expanded },
+        modifier = Modifier.widthIn(max = 320.dp).padding(top = 2.dp),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Text(
+                text = stringResource(
+                    if (expanded) R.string.chat_reasoning_hide else R.string.chat_reasoning_show
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (expanded) {
+                Text(
+                    text = reasoning,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
     }
 }
 

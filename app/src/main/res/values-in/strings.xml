@@ -175,6 +175,8 @@
     <string name="chat_sender_agent">Agen</string>
     <string name="chat_thinking">Agen sedang berpikir…</string>
     <string name="chat_reasoning">Menalar…</string>
+    <string name="chat_reasoning_show">Tampilkan penalaran</string>
+    <string name="chat_reasoning_hide">Sembunyikan penalaran</string>
     <string name="chat_error_prefix">Kesalahan: %1$s</string>
     <string name="chat_clear_history">Bersihkan percakapan</string>
     <string name="chat_history_cleared">Percakapan dibersihkan</string>

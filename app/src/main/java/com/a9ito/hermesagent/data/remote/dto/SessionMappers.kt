@@ -66,10 +66,13 @@ fun SessionMessageDto.toDomain(): SessionMessage = SessionMessage(
     role = roleOf(role),
     text = extractMessageText(content),
     toolName = toolName,
+    // reasoning and reasoning_content are the same text on this server; prefer the
+    // shorter key, fall back to the other so a future divergence doesn't drop it.
+    reasoning = reasoning?.takeIf { it.isNotBlank() } ?: reasoningContent?.takeIf { it.isNotBlank() },
 )
 
 /** Drop empty/system rows so the transcript shows only meaningful turns. */
 fun List<SessionMessageDto>.toDisplayMessages(): List<SessionMessage> =
     map { it.toDomain() }
         .filter { it.role != SessionMessage.Role.SYSTEM }
-        .filter { it.text.isNotBlank() || it.toolName != null }
+        .filter { it.text.isNotBlank() || it.toolName != null || !it.reasoning.isNullOrBlank() }

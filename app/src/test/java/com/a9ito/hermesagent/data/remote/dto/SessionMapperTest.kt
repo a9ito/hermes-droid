@@ -4,6 +4,7 @@ import com.a9ito.hermesagent.core.SessionMessage
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -64,5 +65,31 @@ class SessionMapperTest {
         assertEquals(1, shown.size)
         assertEquals(SessionMessage.Role.USER, shown.single().role)
         assertEquals("hi", shown.single().text)
+    }
+
+    @Test fun reasoningPreferredOverReasoningContentWhenBothPresent() {
+        val dto = SessionMessageDto(id = 1, role = "assistant", reasoning = "short", reasoningContent = "long fallback")
+        assertEquals("short", dto.toDomain().reasoning)
+    }
+
+    @Test fun reasoningFallsBackToReasoningContent() {
+        val dto = SessionMessageDto(id = 1, role = "assistant", reasoning = null, reasoningContent = "the thinking")
+        assertEquals("the thinking", dto.toDomain().reasoning)
+    }
+
+    @Test fun blankReasoningBecomesNull() {
+        val dto = SessionMessageDto(id = 1, role = "assistant", reasoning = "   ", reasoningContent = "")
+        assertNull(dto.toDomain().reasoning)
+    }
+
+    @Test fun assistantWithReasoningButBlankTextIsKept() {
+        // A reasoning-only assistant row must survive the display filter so the
+        // collapsible thinking is still reachable in the transcript.
+        val dtos = listOf(
+            SessionMessageDto(id = 1, role = "assistant", content = json.parseToJsonElement("\"\""), reasoning = "I thought hard"),
+        )
+        val shown = dtos.toDisplayMessages()
+        assertEquals(1, shown.size)
+        assertEquals("I thought hard", shown.single().reasoning)
     }
 }
