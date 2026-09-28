@@ -28,7 +28,6 @@ import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
 import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
-import com.a9ito.hermesagent.data.remote.dto.ModelOptionsResponse
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.SessionChatPayload
 import com.a9ito.hermesagent.data.remote.dto.SkillDto
