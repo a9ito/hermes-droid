@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
@@ -17,7 +18,7 @@ import com.a9ito.hermesagent.R
  * Icons are drawn from androidx.compose.material:material-icons-core (the small,
  * always-bundled set); the large material-icons-extended artifact is
  * deliberately avoided. Email is the closest messaging metaphor for Chat, List
- * for Sessions, Build for Tools.
+ * for Sessions, Build for Tools, DateRange for scheduled Jobs.
  */
 enum class Destination(
     val route: String,
@@ -27,6 +28,7 @@ enum class Destination(
     CHAT("chat", R.string.nav_chat, Icons.Filled.Email),
     SESSIONS("sessions", R.string.nav_sessions, Icons.AutoMirrored.Filled.List),
     TOOLS("tools", R.string.nav_tools, Icons.Filled.Build),
+    JOBS("jobs", R.string.nav_jobs, Icons.Filled.DateRange),
     STATUS("status", R.string.nav_status, Icons.Filled.Info),
     SETTINGS("settings", R.string.nav_settings, Icons.Filled.Settings),
 }

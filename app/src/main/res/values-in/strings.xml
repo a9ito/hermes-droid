@@ -17,6 +17,7 @@
     <string name="nav_chat">Obrolan</string>
     <string name="nav_sessions">Sesi</string>
     <string name="nav_tools">Alat</string>
+    <string name="nav_jobs">Tugas</string>
     <string name="nav_status">Status</string>
     <string name="nav_settings">Pengaturan</string>
 
@@ -51,6 +52,34 @@
 
     <!-- Aksi bersama -->
     <string name="action_back">Kembali</string>
+
+    <!-- ============================ Layar Tugas ============================ -->
+    <string name="jobs_new">Tugas baru</string>
+    <string name="jobs_empty_title">Belum ada tugas terjadwal</string>
+    <string name="jobs_empty_subtitle">Ketuk + untuk menjadwalkan prompt berulang. Tugas berjalan di instance kamu sesuai jadwal, bahkan saat aplikasi ditutup.</string>
+    <string name="jobs_error_prefix">Tidak bisa memuat tugas: %1$s</string>
+    <string name="jobs_locked_title">Butuh koneksi</string>
+    <string name="jobs_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk mengelola tugas terjadwal.</string>
+    <string name="jobs_meta">%1$s • %2$s</string>
+    <string name="jobs_next_run">Berikutnya: %1$s</string>
+    <string name="jobs_run">Jalankan</string>
+    <string name="jobs_pause">Jeda</string>
+    <string name="jobs_resume">Lanjut</string>
+    <string name="jobs_run_triggered">Tugas dijalankan.</string>
+    <string name="jobs_action_failed">Aksi gagal. Tarik untuk menyegarkan.</string>
+    <string name="jobs_delete_title">Hapus tugas?</string>
+    <string name="jobs_delete_message">\"%1$s\" akan dihapus permanen dari jadwal instance.</string>
+    <string name="jobs_delete_confirm">Hapus</string>
+    <string name="jobs_create_confirm">Buat</string>
+    <string name="jobs_field_name">Nama</string>
+    <string name="jobs_field_schedule">Jadwal</string>
+    <string name="jobs_field_schedule_hint">mis. every 2h, 0 9 * * *, 30m</string>
+    <string name="jobs_field_prompt">Prompt</string>
+    <string name="jobs_state_scheduled">Terjadwal</string>
+    <string name="jobs_state_paused">Dijeda</string>
+    <string name="jobs_state_completed">Selesai</string>
+    <string name="jobs_state_error">Error</string>
+    <string name="jobs_state_unknown">Tidak diketahui</string>
 
     <!-- ============================ Layar Pengaturan ============================ -->
     <string name="settings_title">Pengaturan</string>

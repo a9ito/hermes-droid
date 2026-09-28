@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.a9ito.hermesagent.ui.chat.ChatScreen
+import com.a9ito.hermesagent.ui.jobs.JobsScreen
 import com.a9ito.hermesagent.ui.sessions.SessionChatScreen
 import com.a9ito.hermesagent.ui.sessions.SessionsScreen
 import com.a9ito.hermesagent.ui.settings.SettingsScreen
@@ -86,6 +87,9 @@ fun HermesAgentApp() {
                 }
                 composable(Destination.TOOLS.route) {
                     ToolsScreen(onOpenSettings = openSettings)
+                }
+                composable(Destination.JOBS.route) {
+                    JobsScreen(onOpenSettings = openSettings)
                 }
                 composable(Destination.STATUS.route) {
                     StatusScreen(onOpenSettings = openSettings)
