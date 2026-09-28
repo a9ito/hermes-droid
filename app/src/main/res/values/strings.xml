@@ -15,8 +15,40 @@
 
     <!-- Bottom navigation / screen titles -->
     <string name="nav_chat">Chat</string>
+    <string name="nav_sessions">Sessions</string>
+    <string name="nav_tools">Tools</string>
     <string name="nav_status">Status</string>
     <string name="nav_settings">Settings</string>
+
+    <!-- ============================ Sessions screen ============================ -->
+    <string name="sessions_new">New session</string>
+    <string name="sessions_empty_title">No sessions yet</string>
+    <string name="sessions_empty_subtitle">Tap + to start a persistent conversation. Sessions are stored on your instance and shared with every Hermes surface.</string>
+    <string name="sessions_message_count">%1$d messages</string>
+    <string name="sessions_fork_badge">fork</string>
+    <string name="sessions_rename_action">Rename</string>
+    <string name="sessions_fork_action">Fork</string>
+    <string name="sessions_rename_title">Rename session</string>
+    <string name="sessions_rename_confirm">Rename</string>
+    <string name="sessions_delete_title">Delete session?</string>
+    <string name="sessions_delete_message">\"%1$s\" and its transcript will be permanently deleted on the instance.</string>
+    <string name="sessions_delete_confirm">Delete</string>
+    <string name="sessions_error_prefix">Could not load sessions: %1$s</string>
+    <string name="sessions_locked_title">Connection required</string>
+    <string name="sessions_locked_subtitle">Add your host and API token in Settings to browse sessions.</string>
+    <string name="session_chat_title">Session</string>
+
+    <!-- ============================ Tools screen ============================ -->
+    <string name="tools_tab_skills">Skills</string>
+    <string name="tools_tab_toolsets">Toolsets</string>
+    <string name="tools_enabled">Enabled</string>
+    <string name="tools_disabled">Disabled</string>
+    <string name="tools_empty">Nothing to show.</string>
+    <string name="tools_locked_title">Connection required</string>
+    <string name="tools_locked_subtitle">Add your host and API token in Settings to view skills and toolsets.</string>
+
+    <!-- Shared actions -->
+    <string name="action_back">Back</string>
 
     <!-- ============================ Settings screen ============================ -->
     <string name="settings_title">Settings</string>

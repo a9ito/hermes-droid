@@ -15,8 +15,40 @@
 
     <!-- Navigasi bawah / judul layar -->
     <string name="nav_chat">Obrolan</string>
+    <string name="nav_sessions">Sesi</string>
+    <string name="nav_tools">Alat</string>
     <string name="nav_status">Status</string>
     <string name="nav_settings">Pengaturan</string>
+
+    <!-- ============================ Layar Sesi ============================ -->
+    <string name="sessions_new">Sesi baru</string>
+    <string name="sessions_empty_title">Belum ada sesi</string>
+    <string name="sessions_empty_subtitle">Ketuk + untuk memulai percakapan permanen. Sesi disimpan di instance kamu dan dibagikan ke semua permukaan Hermes.</string>
+    <string name="sessions_message_count">%1$d pesan</string>
+    <string name="sessions_fork_badge">cabang</string>
+    <string name="sessions_rename_action">Ganti nama</string>
+    <string name="sessions_fork_action">Cabang</string>
+    <string name="sessions_rename_title">Ganti nama sesi</string>
+    <string name="sessions_rename_confirm">Ganti nama</string>
+    <string name="sessions_delete_title">Hapus sesi?</string>
+    <string name="sessions_delete_message">\"%1$s\" beserta transkripnya akan dihapus permanen di instance.</string>
+    <string name="sessions_delete_confirm">Hapus</string>
+    <string name="sessions_error_prefix">Tidak bisa memuat sesi: %1$s</string>
+    <string name="sessions_locked_title">Butuh koneksi</string>
+    <string name="sessions_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk menjelajahi sesi.</string>
+    <string name="session_chat_title">Sesi</string>
+
+    <!-- ============================ Layar Alat ============================ -->
+    <string name="tools_tab_skills">Skill</string>
+    <string name="tools_tab_toolsets">Toolset</string>
+    <string name="tools_enabled">Aktif</string>
+    <string name="tools_disabled">Nonaktif</string>
+    <string name="tools_empty">Tidak ada yang ditampilkan.</string>
+    <string name="tools_locked_title">Butuh koneksi</string>
+    <string name="tools_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk melihat skill dan toolset.</string>
+
+    <!-- Aksi bersama -->
+    <string name="action_back">Kembali</string>
 
     <!-- ============================ Layar Pengaturan ============================ -->
     <string name="settings_title">Pengaturan</string>

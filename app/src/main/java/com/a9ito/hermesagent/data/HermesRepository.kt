@@ -3,13 +3,26 @@ package com.a9ito.hermesagent.data
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.InstanceStatus
+import com.a9ito.hermesagent.core.SessionMessage
+import com.a9ito.hermesagent.core.SessionSummary
 import com.a9ito.hermesagent.data.remote.AuthInterceptor
 import com.a9ito.hermesagent.data.remote.ChatStreamer
 import com.a9ito.hermesagent.data.remote.ErrorMapper
 import com.a9ito.hermesagent.data.remote.HermesApi
+import com.a9ito.hermesagent.data.remote.SessionChatStreamer
+import com.a9ito.hermesagent.data.remote.SessionStreamEvent
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
+import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
+import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
+import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
+import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
+import com.a9ito.hermesagent.data.remote.dto.SessionChatRequest
+import com.a9ito.hermesagent.data.remote.dto.SkillDto
+import com.a9ito.hermesagent.data.remote.dto.ToolsetDto
+import com.a9ito.hermesagent.data.remote.dto.toDisplayMessages
+import com.a9ito.hermesagent.data.remote.dto.toSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
@@ -56,6 +69,7 @@ class HermesRepository(
         .build()
 
     private val streamer = ChatStreamer(okHttpClient, json)
+    private val sessionStreamer = SessionChatStreamer(okHttpClient, json)
 
     // Cache one Retrofit per base URL so we don't rebuild on every call.
     @Volatile private var cachedBaseUrl: String = ""
@@ -125,6 +139,119 @@ class HermesRepository(
     }
 
     fun classify(t: Throwable): ErrorKind = ErrorMapper.classify(t)
+
+    // ---- Skills & Toolsets (read-only viewers) ----
+
+    suspend fun fetchSkills(config: ConnectionConfig): ApiResult<List<SkillDto>> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).skills().data)
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun fetchToolsets(config: ConnectionConfig): ApiResult<List<ToolsetDto>> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).toolsets().data)
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    // ---- Sessions ----
+
+    suspend fun listSessions(config: ConnectionConfig): ApiResult<List<SessionSummary>> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val rows = apiFor(config).listSessions().data
+                .filter { !it.archived }
+                .map { it.toSummary() }
+            ApiResult.Success(rows)
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun createSession(config: ConnectionConfig, title: String?): ApiResult<SessionSummary> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).createSession(CreateSessionRequest(title = title?.takeIf { it.isNotBlank() }))
+            val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(session.toSummary())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun deleteSession(config: ConnectionConfig, id: String): ApiResult<Boolean> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).deleteSession(id).deleted)
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun forkSession(config: ConnectionConfig, id: String): ApiResult<SessionSummary> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).forkSession(id, ForkSessionRequest())
+            val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(session.toSummary())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun renameSession(config: ConnectionConfig, id: String, title: String): ApiResult<SessionSummary> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).patchSession(id, PatchSessionRequest(title = title))
+            val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(session.toSummary())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun sessionMessages(config: ConnectionConfig, id: String): ApiResult<List<SessionMessage>> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).sessionMessages(id).data.toDisplayMessages())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /** Lock a session to a specific model for subsequent turns. */
+    suspend fun lockSessionModel(config: ConnectionConfig, id: String, model: String): ApiResult<Unit> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            apiFor(config).lockSessionModel(id, ModelLockRequest(model = model))
+            ApiResult.Success(Unit)
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /**
+     * Stream a turn against a persisted session. Emits [SessionStreamEvent]s; the
+     * caller renders deltas and the terminal completed/error frame. The turn is
+     * stored server-side, so history persists and is shared with other surfaces.
+     */
+    fun streamSessionChat(
+        config: ConnectionConfig,
+        sessionId: String,
+        message: String,
+    ): Flow<SessionStreamEvent> = flow {
+        require(config.isComplete)
+        tokenRef.set(config.token)
+        val body = SessionChatRequest(message = message)
+        val payload = json.encodeToString(SessionChatRequest.serializer(), body)
+        sessionStreamer.stream(config.baseUrl, sessionId, payload).collect { emit(it) }
+    }
 }
 
 private fun HealthDetailedDto.toInstanceStatus(modelId: String?): InstanceStatus =

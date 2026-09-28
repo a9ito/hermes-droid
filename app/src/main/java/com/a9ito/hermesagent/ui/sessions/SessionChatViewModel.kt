@@ -1,0 +1,147 @@
+package com.a9ito.hermesagent.ui.sessions
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.a9ito.hermesagent.core.ChatHistory
+import com.a9ito.hermesagent.core.ChatMessage
+import com.a9ito.hermesagent.core.ConnectionConfig
+import com.a9ito.hermesagent.core.ErrorKind
+import com.a9ito.hermesagent.core.SessionMessage
+import com.a9ito.hermesagent.data.ApiResult
+import com.a9ito.hermesagent.data.HermesRepository
+import com.a9ito.hermesagent.data.remote.SessionStreamEvent
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+data class SessionChatUiState(
+    val sessionId: String,
+    val configured: Boolean = false,
+    val loadingHistory: Boolean = false,
+    val history: ChatHistory = ChatHistory(),
+    val input: String = "",
+    val sending: Boolean = false,
+    val errorKind: ErrorKind? = null,
+)
+
+/**
+ * Chat against ONE persisted server session. Unlike the legacy [ChatViewModel],
+ * this loads existing history from the server and streams each turn through
+ * /api/sessions/{id}/chat/stream, so the transcript is durable and shared with
+ * every other Hermes surface (CLI, Discord, desktop).
+ */
+class SessionChatViewModel(
+    private val sessionId: String,
+    private val repository: HermesRepository,
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(SessionChatUiState(sessionId = sessionId))
+    val state: StateFlow<SessionChatUiState> = _state.asStateFlow()
+
+    private var config: ConnectionConfig = ConnectionConfig.EMPTY
+    private var streamJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            repository.connectionFlow.collect { c ->
+                val firstConfigured = c.isComplete && !config.isComplete
+                config = c
+                _state.update { it.copy(configured = c.isComplete) }
+                if (firstConfigured) loadHistory()
+            }
+        }
+    }
+
+    private fun loadHistory() {
+        if (!config.isComplete) return
+        _state.update { it.copy(loadingHistory = true) }
+        viewModelScope.launch {
+            when (val res = repository.sessionMessages(config, sessionId)) {
+                is ApiResult.Success ->
+                    _state.update { it.copy(loadingHistory = false, history = res.data.toHistory()) }
+                is ApiResult.Failure ->
+                    _state.update { it.copy(loadingHistory = false, errorKind = res.kind) }
+            }
+        }
+    }
+
+    fun onInputChange(value: String) = _state.update { it.copy(input = value) }
+    fun consumeError() = _state.update { it.copy(errorKind = null) }
+
+    fun send() {
+        val text = _state.value.input.trim()
+        if (text.isEmpty() || _state.value.sending) return
+        if (!config.isComplete) {
+            _state.update { it.copy(errorKind = ErrorKind.NO_CONNECTION) }
+            return
+        }
+        val (newHistory, assistantId) = _state.value.history.startTurn(text)
+        _state.update { it.copy(history = newHistory, input = "", sending = true, errorKind = null) }
+
+        streamJob = viewModelScope.launch {
+            try {
+                repository.streamSessionChat(config, sessionId, text).collect { event ->
+                    when (event) {
+                        is SessionStreamEvent.Delta ->
+                            _state.update { it.copy(history = it.history.appendDelta(assistantId, event.text)) }
+                        is SessionStreamEvent.Completed ->
+                            // Only overwrite if we never received deltas (server may send both).
+                            _state.update {
+                                val current = it.history.messages.firstOrNull { m -> m.id == assistantId }?.text.orEmpty()
+                                if (current.isEmpty()) it.copy(history = it.history.setText(assistantId, event.content)) else it
+                            }
+                        is SessionStreamEvent.Failed ->
+                            throw SessionStreamFailure(event.message)
+                        SessionStreamEvent.Done, SessionStreamEvent.Ignored -> Unit
+                    }
+                }
+                _state.update { it.copy(history = it.history.finish(assistantId), sending = false) }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                val kind = repository.classify(t)
+                _state.update {
+                    it.copy(history = it.history.fail(assistantId, kind), sending = false, errorKind = kind)
+                }
+            }
+        }
+    }
+
+    fun stop() {
+        streamJob?.cancel()
+        streamJob = null
+        _state.update { st ->
+            val lastAssistant = st.history.messages.lastOrNull { it.role == ChatMessage.Role.ASSISTANT && it.streaming }
+            val h = if (lastAssistant != null) st.history.finish(lastAssistant.id) else st.history
+            st.copy(history = h, sending = false)
+        }
+    }
+
+    /** A server-reported error frame carried out of the stream collector. */
+    private class SessionStreamFailure(message: String) : Exception(message)
+
+    class Factory(
+        private val sessionId: String,
+        private val repository: HermesRepository,
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            SessionChatViewModel(sessionId, repository) as T
+    }
+}
+
+/** Build the chat reducer's history from server messages (pure helper). */
+private fun List<SessionMessage>.toHistory(): ChatHistory {
+    var history = ChatHistory()
+    for (m in this) {
+        val role = if (m.role == SessionMessage.Role.USER) ChatMessage.Role.USER else ChatMessage.Role.ASSISTANT
+        val text = if (m.role == SessionMessage.Role.TOOL && m.toolName != null) "[tool: ${m.toolName}]" else m.text
+        if (text.isBlank()) continue
+        history = history.appendFinal(role, text)
+    }
+    return history
+}

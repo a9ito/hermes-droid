@@ -17,6 +17,10 @@ data class ChatHistory(
         return ChatHistory(messages + userMsg + assistantMsg, nextId + 2) to assistantId
     }
 
+    /** Append one already-complete message (used when replaying server history). */
+    fun appendFinal(role: ChatMessage.Role, text: String): ChatHistory =
+        ChatHistory(messages + ChatMessage(nextId, role, text), nextId + 1)
+
     /** Append a delta to the streaming assistant message [id]. */
     fun appendDelta(id: Long, delta: String): ChatHistory =
         copyMapping(id) { it.copy(text = it.text + delta) }
