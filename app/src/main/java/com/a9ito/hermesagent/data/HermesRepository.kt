@@ -1,6 +1,7 @@
 package com.a9ito.hermesagent.data
 
 import com.a9ito.hermesagent.core.AgentRun
+import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.Capabilities
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.CronJob
@@ -27,7 +28,7 @@ import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
 import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
-import com.a9ito.hermesagent.data.remote.dto.SessionChatRequest
+import com.a9ito.hermesagent.data.remote.dto.SessionChatPayload
 import com.a9ito.hermesagent.data.remote.dto.SkillDto
 import com.a9ito.hermesagent.data.remote.dto.SteerRequest
 import com.a9ito.hermesagent.data.remote.dto.ToolsetDto
@@ -300,11 +301,11 @@ class HermesRepository(
         config: ConnectionConfig,
         sessionId: String,
         message: String,
+        attachments: List<ChatAttachment> = emptyList(),
     ): Flow<SessionStreamEvent> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        val body = SessionChatRequest(message = message)
-        val payload = json.encodeToString(SessionChatRequest.serializer(), body)
+        val payload = SessionChatPayload.encode(json, message, attachments, model = null)
         sessionStreamer.stream(config.baseUrl, sessionId, payload).collect { emit(it) }
     }
 
