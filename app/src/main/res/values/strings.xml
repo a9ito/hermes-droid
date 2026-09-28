@@ -159,7 +159,6 @@
     <string name="settings_cleared">Connection cleared</string>
 
     <string name="settings_resolved_endpoint">Resolved endpoint: %1$s</string>
-    <string name="settings_error_host_required">Enter a host or URL.</string>
     <string name="settings_error_token_required">Enter the API token.</string>
     <string name="settings_error_port_invalid">Port must be a number between 1 and 65535.</string>
     <string name="settings_error_host_invalid">That doesn\'t look like a valid host or URL.</string>
@@ -167,8 +166,6 @@
     <!-- ============================ Chat screen ============================ -->
     <string name="chat_title">Chat</string>
     <string name="chat_input_hint">Message your agent…</string>
-    <string name="chat_send">Send</string>
-    <string name="chat_stop">Stop</string>
     <string name="chat_empty_title">No messages yet</string>
     <string name="chat_empty_subtitle">Send a message to start talking to your Hermes Agent instance.</string>
     <string name="chat_sender_you">You</string>
@@ -179,7 +176,6 @@
     <string name="chat_reasoning_hide">Hide reasoning</string>
     <string name="chat_error_prefix">Error: %1$s</string>
     <string name="chat_clear_history">Clear conversation</string>
-    <string name="chat_history_cleared">Conversation cleared</string>
 
     <!-- Gate shown when host/token are not configured yet -->
     <string name="chat_locked_title">Connection required</string>
@@ -188,7 +184,6 @@
 
     <!-- ============================ Status screen ============================ -->
     <string name="status_title">Status</string>
-    <string name="status_refresh">Refresh</string>
     <string name="status_locked_title">Connection required</string>
     <string name="status_locked_subtitle">Add your host and API token in Settings to see instance status.</string>
     <string name="status_locked_action">Open Settings</string>
@@ -232,13 +227,10 @@
     <string name="error_timeout">The request timed out.</string>
     <string name="error_server">The instance hit a server-side error. This is a problem on the instance, not the app. Check the gateway logs.</string>
     <string name="error_unexpected">Unexpected error.</string>
-    <string name="action_retry">Retry</string>
     <string name="action_dismiss">Dismiss</string>
 
     <!-- Content descriptions (accessibility) -->
     <string name="cd_send_message">Send message</string>
-    <string name="cd_stop_generation">Stop generating</string>
     <string name="cd_refresh_status">Refresh status</string>
-    <string name="cd_toggle_token_visibility">Toggle token visibility</string>
 
 </resources>

@@ -159,7 +159,6 @@
     <string name="settings_cleared">Koneksi dihapus</string>
 
     <string name="settings_resolved_endpoint">Endpoint hasil: %1$s</string>
-    <string name="settings_error_host_required">Masukkan host atau URL.</string>
     <string name="settings_error_token_required">Masukkan token API.</string>
     <string name="settings_error_port_invalid">Port harus angka antara 1 dan 65535.</string>
     <string name="settings_error_host_invalid">Itu sepertinya bukan host atau URL yang valid.</string>
@@ -167,8 +166,6 @@
     <!-- ============================ Layar Obrolan ============================ -->
     <string name="chat_title">Obrolan</string>
     <string name="chat_input_hint">Kirim pesan ke agen kamu…</string>
-    <string name="chat_send">Kirim</string>
-    <string name="chat_stop">Hentikan</string>
     <string name="chat_empty_title">Belum ada pesan</string>
     <string name="chat_empty_subtitle">Kirim pesan untuk mulai mengobrol dengan instance Hermes Agent kamu.</string>
     <string name="chat_sender_you">Kamu</string>
@@ -179,7 +176,6 @@
     <string name="chat_reasoning_hide">Sembunyikan penalaran</string>
     <string name="chat_error_prefix">Kesalahan: %1$s</string>
     <string name="chat_clear_history">Bersihkan percakapan</string>
-    <string name="chat_history_cleared">Percakapan dibersihkan</string>
 
     <!-- Gerbang saat host/token belum dikonfigurasi -->
     <string name="chat_locked_title">Koneksi diperlukan</string>
@@ -188,7 +184,6 @@
 
     <!-- ============================ Layar Status ============================ -->
     <string name="status_title">Status</string>
-    <string name="status_refresh">Segarkan</string>
     <string name="status_locked_title">Koneksi diperlukan</string>
     <string name="status_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk melihat status instance.</string>
     <string name="status_locked_action">Buka Pengaturan</string>
@@ -232,13 +227,10 @@
     <string name="error_timeout">Permintaan melebihi batas waktu.</string>
     <string name="error_server">Instance mengalami kesalahan sisi server. Ini masalah di instance, bukan di aplikasi. Cek log gateway.</string>
     <string name="error_unexpected">Kesalahan tak terduga.</string>
-    <string name="action_retry">Coba lagi</string>
     <string name="action_dismiss">Tutup</string>
 
     <!-- Deskripsi konten (aksesibilitas) -->
     <string name="cd_send_message">Kirim pesan</string>
-    <string name="cd_stop_generation">Hentikan pembuatan</string>
     <string name="cd_refresh_status">Segarkan status</string>
-    <string name="cd_toggle_token_visibility">Ubah visibilitas token</string>
 
 </resources>
