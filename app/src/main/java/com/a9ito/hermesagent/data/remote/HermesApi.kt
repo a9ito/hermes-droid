@@ -1,5 +1,6 @@
 package com.a9ito.hermesagent.data.remote
 
+import com.a9ito.hermesagent.data.remote.dto.ApprovalRequestBody
 import com.a9ito.hermesagent.data.remote.dto.CapabilitiesDto
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionResponse
@@ -13,6 +14,10 @@ import com.a9ito.hermesagent.data.remote.dto.JobListResponse
 import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
 import com.a9ito.hermesagent.data.remote.dto.ModelsResponse
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
+import com.a9ito.hermesagent.data.remote.dto.RunAdmissionDto
+import com.a9ito.hermesagent.data.remote.dto.RunStatusDto
+import com.a9ito.hermesagent.data.remote.dto.CreateRunRequest
+import com.a9ito.hermesagent.data.remote.dto.SteerRequest
 import com.a9ito.hermesagent.data.remote.dto.SessionEnvelope
 import com.a9ito.hermesagent.data.remote.dto.SessionListResponse
 import com.a9ito.hermesagent.data.remote.dto.SessionMessagesResponse
@@ -135,4 +140,21 @@ interface HermesApi {
 
     @POST("api/jobs/{id}/run")
     suspend fun runJob(@Path("id") id: String): JobEnvelope
+
+    // ---- Durable agent runs ----
+
+    @POST("v1/runs")
+    suspend fun createRun(@Body request: CreateRunRequest): RunAdmissionDto
+
+    @GET("v1/runs/{id}")
+    suspend fun getRun(@Path("id") id: String): RunStatusDto
+
+    @POST("v1/runs/{id}/stop")
+    suspend fun stopRun(@Path("id") id: String): retrofit2.Response<Unit>
+
+    @POST("v1/runs/{id}/steer")
+    suspend fun steerRun(@Path("id") id: String, @Body request: SteerRequest): retrofit2.Response<Unit>
+
+    @POST("v1/runs/{id}/approval")
+    suspend fun approveRun(@Path("id") id: String, @Body request: ApprovalRequestBody): retrofit2.Response<Unit>
 }

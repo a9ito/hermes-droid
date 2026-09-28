@@ -21,6 +21,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.a9ito.hermesagent.ui.chat.ChatScreen
 import com.a9ito.hermesagent.ui.jobs.JobsScreen
+import com.a9ito.hermesagent.ui.runs.RunsScreen
 import com.a9ito.hermesagent.ui.sessions.SessionChatScreen
 import com.a9ito.hermesagent.ui.sessions.SessionsScreen
 import com.a9ito.hermesagent.ui.settings.SettingsScreen
@@ -84,6 +85,9 @@ fun HermesAgentApp() {
                         onOpenSettings = openSettings,
                         onOpenSession = { id -> navController.navigate("session_chat/$id") },
                     )
+                }
+                composable(Destination.RUNS.route) {
+                    RunsScreen(onOpenSettings = openSettings)
                 }
                 composable(Destination.TOOLS.route) {
                     ToolsScreen(onOpenSettings = openSettings)

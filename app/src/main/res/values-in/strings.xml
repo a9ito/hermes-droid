@@ -16,6 +16,7 @@
     <!-- Navigasi bawah / judul layar -->
     <string name="nav_chat">Obrolan</string>
     <string name="nav_sessions">Sesi</string>
+    <string name="nav_runs">Run</string>
     <string name="nav_tools">Alat</string>
     <string name="nav_jobs">Tugas</string>
     <string name="nav_status">Status</string>
@@ -52,6 +53,32 @@
 
     <!-- Aksi bersama -->
     <string name="action_back">Kembali</string>
+
+    <!-- ============================ Layar Run ============================ -->
+    <string name="runs_prompt_label">Minta agent melakukan sesuatu…</string>
+    <string name="runs_submit">Mulai run</string>
+    <string name="runs_locked_title">Butuh koneksi</string>
+    <string name="runs_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk memulai agent run.</string>
+    <string name="runs_unsupported_title">Run tidak didukung</string>
+    <string name="runs_unsupported_subtitle">Instance ini tidak menyediakan API kontrol run (submit/stop/events). Perbarui gateway untuk memakai layar ini.</string>
+    <string name="runs_error_prefix">Run gagal: %1$s</string>
+    <string name="runs_activity">Aktivitas</string>
+    <string name="runs_stop">Hentikan</string>
+    <string name="runs_steer">Arahkan</string>
+    <string name="runs_steer_title">Arahkan run</string>
+    <string name="runs_steer_label">Panduan tambahan untuk agent yang berjalan</string>
+    <string name="runs_steer_send">Kirim</string>
+    <string name="runs_approval_title">Setujui panggilan tool?</string>
+    <string name="runs_approval_tool">Tool: %1$s</string>
+    <string name="runs_state_queued">Antre</string>
+    <string name="runs_state_running">Berjalan…</string>
+    <string name="runs_state_waiting">Menunggu persetujuan</string>
+    <string name="runs_state_stopping">Menghentikan…</string>
+    <string name="runs_state_completed">Selesai</string>
+    <string name="runs_state_failed">Gagal</string>
+    <string name="runs_state_cancelled">Dibatalkan</string>
+    <string name="runs_state_interrupted">Terputus</string>
+    <string name="runs_state_unknown">Tidak diketahui</string>
 
     <!-- ============================ Layar Tugas ============================ -->
     <string name="jobs_new">Tugas baru</string>

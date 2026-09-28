@@ -1,5 +1,6 @@
 package com.a9ito.hermesagent.data
 
+import com.a9ito.hermesagent.core.AgentRun
 import com.a9ito.hermesagent.core.Capabilities
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.CronJob
@@ -11,12 +12,16 @@ import com.a9ito.hermesagent.data.remote.AuthInterceptor
 import com.a9ito.hermesagent.data.remote.ChatStreamer
 import com.a9ito.hermesagent.data.remote.ErrorMapper
 import com.a9ito.hermesagent.data.remote.HermesApi
+import com.a9ito.hermesagent.data.remote.RunEventStreamer
+import com.a9ito.hermesagent.data.remote.RunStreamEvent
 import com.a9ito.hermesagent.data.remote.SessionChatStreamer
 import com.a9ito.hermesagent.data.remote.SessionStreamEvent
 import com.a9ito.hermesagent.data.remote.HttpStatusException
+import com.a9ito.hermesagent.data.remote.dto.ApprovalRequestBody
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
 import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
+import com.a9ito.hermesagent.data.remote.dto.CreateRunRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
@@ -24,6 +29,7 @@ import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.SessionChatRequest
 import com.a9ito.hermesagent.data.remote.dto.SkillDto
+import com.a9ito.hermesagent.data.remote.dto.SteerRequest
 import com.a9ito.hermesagent.data.remote.dto.ToolsetDto
 import com.a9ito.hermesagent.data.remote.dto.toDisplayMessages
 import com.a9ito.hermesagent.data.remote.dto.toDomain
@@ -76,6 +82,7 @@ class HermesRepository(
 
     private val streamer = ChatStreamer(okHttpClient, json)
     private val sessionStreamer = SessionChatStreamer(okHttpClient, json)
+    private val runStreamer = RunEventStreamer(okHttpClient, json)
 
     // Cache one Retrofit per base URL so we don't rebuild on every call.
     @Volatile private var cachedBaseUrl: String = ""
@@ -349,6 +356,68 @@ class HermesRepository(
             }
             val job = env.job ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
             ApiResult.Success(job.toDomain())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    // ---- Durable agent runs ----
+
+    /** Submit a new run; returns the admitted run (run_id + initial status). */
+    suspend fun createRun(
+        config: ConnectionConfig, input: String, model: String? = null, sessionId: String? = null,
+    ): ApiResult<AgentRun> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        if (input.isBlank()) return ApiResult.Failure(ErrorKind.UNEXPECTED)
+        return try {
+            val dto = apiFor(config).createRun(
+                CreateRunRequest(input = input.trim(), model = model, sessionId = sessionId))
+            ApiResult.Success(dto.toDomain())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /** Poll a run's current status. Used to reconcile after the stream ends or reconnects. */
+    suspend fun getRun(config: ConnectionConfig, runId: String): ApiResult<AgentRun> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).getRun(runId).toDomain())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /** Subscribe to a run's live event stream (GET /v1/runs/{id}/events). */
+    fun streamRunEvents(config: ConnectionConfig, runId: String): Flow<RunStreamEvent> = flow {
+        require(config.isComplete)
+        tokenRef.set(config.token)
+        runStreamer.stream(config.baseUrl, runId).collect { emit(it) }
+    }
+
+    suspend fun stopRun(config: ConnectionConfig, runId: String): ApiResult<Unit> =
+        runControl(config) { apiFor(config).stopRun(runId) }
+
+    suspend fun steerRun(config: ConnectionConfig, runId: String, text: String): ApiResult<Unit> {
+        if (text.isBlank()) return ApiResult.Failure(ErrorKind.UNEXPECTED)
+        return runControl(config) { apiFor(config).steerRun(runId, SteerRequest(text.trim())) }
+    }
+
+    suspend fun approveRun(
+        config: ConnectionConfig, runId: String, choice: String, requestId: String? = null,
+    ): ApiResult<Unit> = runControl(config) {
+        apiFor(config).approveRun(runId, ApprovalRequestBody(choice = choice, requestId = requestId))
+    }
+
+    /** Shared body for the fire-and-forget run-control verbs (stop/steer/approval). */
+    private suspend inline fun runControl(
+        config: ConnectionConfig, call: () -> retrofit2.Response<Unit>,
+    ): ApiResult<Unit> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val resp = call()
+            if (resp.isSuccessful) ApiResult.Success(Unit)
+            else ApiResult.Failure(ErrorMapper.classify(HttpStatusException(resp.code())))
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
         }
