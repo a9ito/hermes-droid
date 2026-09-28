@@ -17,6 +17,7 @@
     <string name="nav_chat">Chat</string>
     <string name="nav_sessions">Sessions</string>
     <string name="nav_tools">Tools</string>
+    <string name="nav_jobs">Jobs</string>
     <string name="nav_status">Status</string>
     <string name="nav_settings">Settings</string>
 
@@ -51,6 +52,34 @@
 
     <!-- Shared actions -->
     <string name="action_back">Back</string>
+
+    <!-- ============================ Jobs screen ============================ -->
+    <string name="jobs_new">New job</string>
+    <string name="jobs_empty_title">No scheduled jobs</string>
+    <string name="jobs_empty_subtitle">Tap + to schedule a recurring prompt. Jobs run on your instance on their schedule, even when the app is closed.</string>
+    <string name="jobs_error_prefix">Could not load jobs: %1$s</string>
+    <string name="jobs_locked_title">Connection required</string>
+    <string name="jobs_locked_subtitle">Add your host and API token in Settings to manage scheduled jobs.</string>
+    <string name="jobs_meta">%1$s • %2$s</string>
+    <string name="jobs_next_run">Next: %1$s</string>
+    <string name="jobs_run">Run now</string>
+    <string name="jobs_pause">Pause</string>
+    <string name="jobs_resume">Resume</string>
+    <string name="jobs_run_triggered">Run triggered.</string>
+    <string name="jobs_action_failed">Action failed. Pull to refresh.</string>
+    <string name="jobs_delete_title">Delete job?</string>
+    <string name="jobs_delete_message">\"%1$s\" will be permanently removed from the instance\'s schedule.</string>
+    <string name="jobs_delete_confirm">Delete</string>
+    <string name="jobs_create_confirm">Create</string>
+    <string name="jobs_field_name">Name</string>
+    <string name="jobs_field_schedule">Schedule</string>
+    <string name="jobs_field_schedule_hint">e.g. every 2h, 0 9 * * *, 30m</string>
+    <string name="jobs_field_prompt">Prompt</string>
+    <string name="jobs_state_scheduled">Scheduled</string>
+    <string name="jobs_state_paused">Paused</string>
+    <string name="jobs_state_completed">Completed</string>
+    <string name="jobs_state_error">Error</string>
+    <string name="jobs_state_unknown">Unknown</string>
 
     <!-- ============================ Settings screen ============================ -->
     <string name="settings_title">Settings</string>

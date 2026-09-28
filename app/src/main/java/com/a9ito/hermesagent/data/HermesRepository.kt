@@ -1,6 +1,7 @@
 package com.a9ito.hermesagent.data
 
 import com.a9ito.hermesagent.core.ConnectionConfig
+import com.a9ito.hermesagent.core.CronJob
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.InstanceStatus
 import com.a9ito.hermesagent.core.SessionMessage
@@ -11,8 +12,10 @@ import com.a9ito.hermesagent.data.remote.ErrorMapper
 import com.a9ito.hermesagent.data.remote.HermesApi
 import com.a9ito.hermesagent.data.remote.SessionChatStreamer
 import com.a9ito.hermesagent.data.remote.SessionStreamEvent
+import com.a9ito.hermesagent.data.remote.HttpStatusException
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
+import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
@@ -22,6 +25,8 @@ import com.a9ito.hermesagent.data.remote.dto.SessionChatRequest
 import com.a9ito.hermesagent.data.remote.dto.SkillDto
 import com.a9ito.hermesagent.data.remote.dto.ToolsetDto
 import com.a9ito.hermesagent.data.remote.dto.toDisplayMessages
+import com.a9ito.hermesagent.data.remote.dto.toDomain
+import com.a9ito.hermesagent.data.remote.dto.toDomainJobs
 import com.a9ito.hermesagent.data.remote.dto.toSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -274,7 +279,63 @@ class HermesRepository(
         val payload = json.encodeToString(SessionChatRequest.serializer(), body)
         sessionStreamer.stream(config.baseUrl, sessionId, payload).collect { emit(it) }
     }
+
+    // ---- Cron jobs ----
+
+    suspend fun listJobs(config: ConnectionConfig): ApiResult<List<CronJob>> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).listJobs().jobs.toDomainJobs())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun createJob(
+        config: ConnectionConfig, name: String, schedule: String, prompt: String,
+    ): ApiResult<CronJob> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).createJob(
+                CreateJobRequest(name = name.trim(), schedule = schedule.trim(), prompt = prompt.trim()))
+            val job = env.job ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(job.toDomain())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    suspend fun deleteJob(config: ConnectionConfig, id: String): ApiResult<Unit> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val resp = apiFor(config).deleteJob(id)
+            if (resp.isSuccessful) ApiResult.Success(Unit)
+            else ApiResult.Failure(ErrorMapper.classify(HttpStatusException(resp.code())))
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /** Pause, resume, or run-now. Which verb is chosen by the caller via [action]. */
+    suspend fun jobAction(config: ConnectionConfig, id: String, action: JobAction): ApiResult<CronJob> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val api = apiFor(config)
+            val env = when (action) {
+                JobAction.PAUSE -> api.pauseJob(id)
+                JobAction.RESUME -> api.resumeJob(id)
+                JobAction.RUN -> api.runJob(id)
+            }
+            val job = env.job ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(job.toDomain())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
 }
+
+/** The three side-effecting job verbs the app exposes. */
+enum class JobAction { PAUSE, RESUME, RUN }
 
 private fun HealthDetailedDto.toInstanceStatus(modelId: String?): InstanceStatus =
     InstanceStatus(

@@ -2,10 +2,13 @@ package com.a9ito.hermesagent.data.remote
 
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionResponse
+import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.DeleteSessionResponse
 import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.HealthDetailedDto
+import com.a9ito.hermesagent.data.remote.dto.JobEnvelope
+import com.a9ito.hermesagent.data.remote.dto.JobListResponse
 import com.a9ito.hermesagent.data.remote.dto.ModelLockRequest
 import com.a9ito.hermesagent.data.remote.dto.ModelsResponse
 import com.a9ito.hermesagent.data.remote.dto.PatchSessionRequest
@@ -14,6 +17,7 @@ import com.a9ito.hermesagent.data.remote.dto.SessionListResponse
 import com.a9ito.hermesagent.data.remote.dto.SessionMessagesResponse
 import com.a9ito.hermesagent.data.remote.dto.SkillListResponse
 import com.a9ito.hermesagent.data.remote.dto.ToolsetListResponse
+import com.a9ito.hermesagent.data.remote.dto.UpdateJobRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -99,4 +103,32 @@ interface HermesApi {
 
     @POST("api/sessions/{id}/model")
     suspend fun lockSessionModel(@Path("id") id: String, @Body request: ModelLockRequest)
+
+    // ---- Cron jobs ----
+
+    @GET("api/jobs")
+    suspend fun listJobs(
+        @Query("include_disabled") includeDisabled: Boolean = true,
+    ): JobListResponse
+
+    @POST("api/jobs")
+    suspend fun createJob(@Body request: CreateJobRequest): JobEnvelope
+
+    @GET("api/jobs/{id}")
+    suspend fun getJob(@Path("id") id: String): JobEnvelope
+
+    @PATCH("api/jobs/{id}")
+    suspend fun updateJob(@Path("id") id: String, @Body request: UpdateJobRequest): JobEnvelope
+
+    @DELETE("api/jobs/{id}")
+    suspend fun deleteJob(@Path("id") id: String): retrofit2.Response<Unit>
+
+    @POST("api/jobs/{id}/pause")
+    suspend fun pauseJob(@Path("id") id: String): JobEnvelope
+
+    @POST("api/jobs/{id}/resume")
+    suspend fun resumeJob(@Path("id") id: String): JobEnvelope
+
+    @POST("api/jobs/{id}/run")
+    suspend fun runJob(@Path("id") id: String): JobEnvelope
 }
