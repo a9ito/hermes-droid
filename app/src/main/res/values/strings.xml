@@ -36,6 +36,9 @@
     <string name="sessions_unpin_action">Unpin</string>
     <string name="sessions_pinned_badge">PINNED</string>
     <string name="sessions_archive_action">Archive</string>
+    <string name="sessions_search_hint">Search sessions</string>
+    <string name="sessions_search_clear">Clear search</string>
+    <string name="sessions_search_empty">No sessions match \"%1$s\".</string>
     <string name="sessions_archive_title">Archive session?</string>
     <string name="sessions_archive_message">\"%1$s\" will be hidden from this list. It stays on your instance and can be restored from the desktop.</string>
     <string name="sessions_archive_confirm">Archive</string>
@@ -79,6 +82,7 @@
     <string name="chat_attach_too_large">Image is too large (max 4 MB).</string>
     <string name="chat_attach_failed">Couldn\'t read that image.</string>
     <string name="chat_attachment_badge">%1$d image attached</string>
+    <string name="chat_copied">Copied to clipboard</string>
 
     <!-- ============================ Runs screen ============================ -->
     <string name="runs_prompt_label">Ask the agent to do something…</string>

@@ -82,9 +82,21 @@ class HermesRepository(
         .addInterceptor(AuthInterceptor { tokenRef.get() })
         .build()
 
-    private val streamer = ChatStreamer(okHttpClient, json)
-    private val sessionStreamer = SessionChatStreamer(okHttpClient, json)
-    private val runStreamer = RunEventStreamer(okHttpClient, json)
+    // SSE streams stay open for a whole agent turn, which legitimately runs for
+    // many minutes while server-side tools execute. The server emits a keepalive
+    // roughly every 10s, but under heavy load on the instance (e.g. a phone-hosted
+    // gateway) those can starve past any fixed idle bound — so a readTimeout here
+    // aborts a perfectly healthy turn mid-flight ("request timed out"). Lift only
+    // the idle-read cap for streaming; connect/write stay so a genuinely dead
+    // socket is still detected, and leaving the screen cancels the coroutine. Reuses
+    // the base client's connection pool + AuthInterceptor via newBuilder().
+    private val streamingClient: OkHttpClient = okHttpClient.newBuilder()
+        .readTimeout(0, TimeUnit.SECONDS)
+        .build()
+
+    private val streamer = ChatStreamer(streamingClient, json)
+    private val sessionStreamer = SessionChatStreamer(streamingClient, json)
+    private val runStreamer = RunEventStreamer(streamingClient, json)
 
     // Cache one Retrofit per base URL so we don't rebuild on every call.
     @Volatile private var cachedBaseUrl: String = ""

@@ -10,6 +10,22 @@ package com.a9ito.hermesagent.core
 fun List<SessionSummary>.sortedForDisplay(): List<SessionSummary> =
     sortedByStable { !it.pinned } // false (pinned) sorts before true (unpinned)
 
+/**
+ * Case-insensitive filter for the sessions list. Matches [query] against the
+ * session title, model id, and preview snippet. A blank query returns the list
+ * unchanged. Pure / Android-free so the match rule is unit-tested on the JVM.
+ */
+fun List<SessionSummary>.filteredBy(query: String): List<SessionSummary> {
+    val q = query.trim()
+    if (q.isEmpty()) return this
+    val needle = q.lowercase()
+    return filter { s ->
+        s.title.lowercase().contains(needle) ||
+            (s.model?.lowercase()?.contains(needle) == true) ||
+            (s.preview?.lowercase()?.contains(needle) == true)
+    }
+}
+
 /** Stable sort by a Comparable key — preserves input order among equal keys. */
 private inline fun <T, K : Comparable<K>> List<T>.sortedByStable(crossinline key: (T) -> K): List<T> =
     withIndex().sortedWith(compareBy({ key(it.value) }, { it.index })).map { it.value }

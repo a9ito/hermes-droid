@@ -11,8 +11,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -104,6 +106,7 @@ fun SessionsScreen(
             state = state,
             contentPadding = innerPadding,
             onOpen = viewModel::open,
+            onQueryChange = viewModel::onQueryChange,
             onDelete = viewModel::delete,
             onFork = viewModel::fork,
             onRename = viewModel::rename,
@@ -118,6 +121,7 @@ private fun SessionsContent(
     state: SessionsUiState,
     contentPadding: PaddingValues,
     onOpen: (String) -> Unit,
+    onQueryChange: (String) -> Unit,
     onDelete: (String) -> Unit,
     onFork: (String) -> Unit,
     onRename: (String, String) -> Unit,
@@ -128,8 +132,28 @@ private fun SessionsContent(
     var confirmArchive by remember { mutableStateOf<SessionSummary?>(null) }
     var renaming by remember { mutableStateOf<SessionSummary?>(null) }
     val errorKind = state.errorKind
+    val visible = state.visibleSessions
 
     Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
+        // Search box: shown once there is anything to search, so an empty instance
+        // isn't cluttered. Filtering is client-side over the already-loaded list.
+        if (state.sessions.isNotEmpty()) {
+            OutlinedTextField(
+                value = state.query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (state.query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.sessions_search_clear))
+                        }
+                    }
+                },
+                placeholder = { Text(stringResource(R.string.sessions_search_hint)) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
         when {
             state.loading && state.sessions.isEmpty() ->
                 CenteredMessage { CircularProgressIndicator() }
@@ -147,12 +171,19 @@ private fun SessionsContent(
                         Text(stringResource(R.string.sessions_empty_subtitle), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+            visible.isEmpty() ->
+                CenteredMessage {
+                    Text(
+                        stringResource(R.string.sessions_search_empty, state.query),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(state.sessions, key = { it.id }) { session ->
+                items(visible, key = { it.id }) { session ->
                     SessionRow(
                         session = session,
                         onOpen = { onOpen(session.id) },

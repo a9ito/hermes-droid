@@ -1,7 +1,10 @@
 package com.a9ito.hermesagent.ui.sessions
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,8 +47,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -153,9 +160,13 @@ fun SessionChatScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun MessageBubble(message: ChatMessage) {
     val isUser = message.role == ChatMessage.Role.USER
+    val clipboard = LocalClipboardManager.current
+    val haptics = LocalHapticFeedback.current
+    val context = LocalContext.current
     val bubbleColor = when {
         message.error -> MaterialTheme.colorScheme.errorContainer
         isUser -> MaterialTheme.colorScheme.primaryContainer
@@ -167,6 +178,7 @@ private fun MessageBubble(message: ChatMessage) {
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     val alignment = if (isUser) Alignment.End else Alignment.Start
+    val copiedLabel = stringResource(R.string.chat_copied)
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = alignment) {
         Text(
             text = stringResource(if (isUser) R.string.chat_sender_you else R.string.chat_sender_agent),
@@ -183,7 +195,20 @@ private fun MessageBubble(message: ChatMessage) {
             Surface(
                 color = bubbleColor,
                 shape = MaterialTheme.shapes.large,
-                modifier = Modifier.widthIn(max = 320.dp),
+                // Long-press copies the answer text to the clipboard. Only offered
+                // when there is real text (not the "thinking…" placeholder or an
+                // error bubble, which have nothing worth copying).
+                modifier = Modifier
+                    .widthIn(max = 320.dp)
+                    .combinedClickable(
+                        enabled = message.text.isNotEmpty() && !message.error,
+                        onClick = {},
+                        onLongClick = {
+                            clipboard.setText(AnnotatedString(message.text))
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            Toast.makeText(context, copiedLabel, Toast.LENGTH_SHORT).show()
+                        },
+                    ),
             ) {
                 val shown = when {
                     message.error -> stringResource(
