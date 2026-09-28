@@ -1,5 +1,6 @@
 package com.a9ito.hermesagent.data
 
+import com.a9ito.hermesagent.core.Capabilities
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.CronJob
 import com.a9ito.hermesagent.core.ErrorKind
@@ -110,6 +111,26 @@ class HermesRepository(
             ApiResult.Success(health.toInstanceStatus(model))
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /**
+     * GET /v1/capabilities. A 404/older gateway (no such endpoint) is NOT an
+     * error the user should see — it means "capabilities unknown", so we map it
+     * to [Capabilities.baseline] rather than a failure. Any other failure (auth,
+     * network) still surfaces so the caller can react.
+     */
+    suspend fun fetchCapabilities(config: ConnectionConfig): ApiResult<Capabilities> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            ApiResult.Success(apiFor(config).capabilities().toDomain())
+        } catch (t: Throwable) {
+            val kind = ErrorMapper.classify(t)
+            if (t is retrofit2.HttpException && t.code() == 404) {
+                ApiResult.Success(Capabilities.baseline())
+            } else {
+                ApiResult.Failure(kind)
+            }
         }
     }
 
