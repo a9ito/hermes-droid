@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.ui.status
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.a9ito.hermesagent.core.Capabilities
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.InstanceStatus
@@ -19,6 +20,7 @@ data class StatusUiState(
     val configLoaded: Boolean = false,
     val loading: Boolean = false,
     val status: InstanceStatus? = null,
+    val capabilities: Capabilities? = null,
     val errorKind: ErrorKind? = null,
 )
 
@@ -54,6 +56,12 @@ class StatusViewModel(
                     _state.update { it.copy(loading = false, status = res.data, errorKind = null) }
                 is ApiResult.Failure ->
                     _state.update { it.copy(loading = false, status = null, errorKind = res.kind) }
+            }
+            // Capabilities are best-effort context, not gating for this screen:
+            // a failure here shouldn't blank the status the user just fetched.
+            when (val caps = repository.fetchCapabilities(config)) {
+                is ApiResult.Success -> _state.update { it.copy(capabilities = caps.data) }
+                is ApiResult.Failure -> Unit
             }
         }
     }

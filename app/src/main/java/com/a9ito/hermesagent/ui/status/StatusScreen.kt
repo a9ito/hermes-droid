@@ -106,7 +106,39 @@ private fun StatusContent(state: StatusUiState, contentPadding: PaddingValues) {
                     )
                 }
             }
-            state.status != null -> StatusCard(state.status)
+            state.status != null -> {
+                StatusCard(state.status)
+                state.capabilities?.let { CapabilitiesCard(it) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CapabilitiesCard(caps: com.a9ito.hermesagent.core.Capabilities) {
+    val on = stringResource(R.string.status_value_yes)
+    val off = stringResource(R.string.status_value_no)
+    fun mark(b: Boolean) = if (b) on else off
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.caps_title), style = MaterialTheme.typography.titleMedium)
+            if (!caps.knownReachable) {
+                Text(
+                    stringResource(R.string.caps_unknown),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            HorizontalDivider()
+            StatusRow(stringResource(R.string.caps_run_control), mark(caps.supportsRunControl))
+            StatusRow(stringResource(R.string.caps_run_steer), mark(caps.runSteer))
+            StatusRow(stringResource(R.string.caps_run_approval), mark(caps.runApproval))
+            StatusRow(stringResource(R.string.caps_sessions), mark(caps.sessionChat))
+            StatusRow(stringResource(R.string.caps_session_fork), mark(caps.sessionFork))
+            StatusRow(stringResource(R.string.caps_model_lock), mark(caps.sessionModelLock))
+            StatusRow(stringResource(R.string.caps_skills), mark(caps.skillsApi))
+            StatusRow(stringResource(R.string.caps_artifacts), mark(caps.supportsArtifacts))
         }
     }
 }

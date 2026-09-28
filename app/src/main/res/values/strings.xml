@@ -150,6 +150,18 @@
     <string name="status_field_platforms">Connected platforms</string>
     <string name="status_field_updated">Updated</string>
 
+    <!-- Capabilities card (feature detection from /v1/capabilities) -->
+    <string name="caps_title">Instance capabilities</string>
+    <string name="caps_unknown">This instance doesn\'t report capabilities (older gateway). Showing conservative defaults.</string>
+    <string name="caps_run_control">Run control (submit/stop/events)</string>
+    <string name="caps_run_steer">Steer a running turn</string>
+    <string name="caps_run_approval">Approve tool calls</string>
+    <string name="caps_sessions">Persistent sessions</string>
+    <string name="caps_session_fork">Fork sessions</string>
+    <string name="caps_model_lock">Per-session model lock</string>
+    <string name="caps_skills">Skills API</string>
+    <string name="caps_artifacts">Artifacts (upload/download)</string>
+
     <string name="status_value_yes">Yes</string>
     <string name="status_value_no">No</string>
     <string name="status_value_unknown">Unknown</string>

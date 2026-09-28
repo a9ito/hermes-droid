@@ -1,5 +1,6 @@
 package com.a9ito.hermesagent.data.remote
 
+import com.a9ito.hermesagent.data.remote.dto.CapabilitiesDto
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionResponse
 import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
@@ -68,6 +69,9 @@ interface HermesApi {
 
     @GET("v1/toolsets")
     suspend fun toolsets(): ToolsetListResponse
+
+    @GET("v1/capabilities")
+    suspend fun capabilities(): CapabilitiesDto
 
     @POST("v1/chat/completions")
     suspend fun chatCompletion(@Body request: ChatCompletionRequest): ChatCompletionResponse

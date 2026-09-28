@@ -150,6 +150,18 @@
     <string name="status_field_platforms">Platform terhubung</string>
     <string name="status_field_updated">Diperbarui</string>
 
+    <!-- Kartu kapabilitas (deteksi fitur dari /v1/capabilities) -->
+    <string name="caps_title">Kapabilitas instance</string>
+    <string name="caps_unknown">Instance ini tidak melaporkan kapabilitas (gateway lama). Menampilkan default konservatif.</string>
+    <string name="caps_run_control">Kontrol run (submit/stop/events)</string>
+    <string name="caps_run_steer">Arahkan turn yang berjalan</string>
+    <string name="caps_run_approval">Setujui panggilan tool</string>
+    <string name="caps_sessions">Sesi persisten</string>
+    <string name="caps_session_fork">Fork sesi</string>
+    <string name="caps_model_lock">Kunci model per sesi</string>
+    <string name="caps_skills">API Skills</string>
+    <string name="caps_artifacts">Artifact (unggah/unduh)</string>
+
     <string name="status_value_yes">Ya</string>
     <string name="status_value_no">Tidak</string>
     <string name="status_value_unknown">Tidak diketahui</string>
