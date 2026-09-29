@@ -70,8 +70,11 @@ interface HermesApi {
     @GET("v1/models")
     suspend fun models(): ModelsResponse
 
+    // refresh=true forces the server to resolve free-tier pricing/entitlement
+    // synchronously (a Portal fetch, ~15s). A plain GET never triggers it, so
+    // without refresh the free-tier catalog stays pending / all-locked.
     @GET("api/model/options")
-    suspend fun modelOptions(): ModelOptionsResponse
+    suspend fun modelOptions(@Query("refresh") refresh: Boolean = false): ModelOptionsResponse
 
     @GET("v1/skills")
     suspend fun skills(): SkillListResponse

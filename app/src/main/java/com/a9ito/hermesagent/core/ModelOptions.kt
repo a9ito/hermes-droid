@@ -17,6 +17,13 @@ data class ModelOptions(
 ) {
     val isEmpty: Boolean get() = providers.isEmpty()
 
+    /**
+     * A provider is still resolving free-tier pricing/entitlement on the server.
+     * While true the server locks every model on that provider (fail-closed), so
+     * the picker's unavailable flags are provisional — a refresh settles them.
+     */
+    val pending: Boolean get() = providers.any { it.pricingPending }
+
     /** All selectable model ids across authenticated providers, current first. */
     fun flatModelIds(): List<String> =
         providers.filter { it.authenticated }
@@ -34,6 +41,8 @@ data class ModelProvider(
     val needsAuth: Boolean = false,
     val warning: String? = null,
     val freeTier: Boolean = false,
+    /** Server hasn't settled tier pricing/entitlement yet; availability is provisional. */
+    val pricingPending: Boolean = false,
     val models: List<ModelOption> = emptyList(),
     /** Subset of [models] the server flags as headliners; empty for non-aggregators. */
     val featuredModelIds: Set<String> = emptySet(),

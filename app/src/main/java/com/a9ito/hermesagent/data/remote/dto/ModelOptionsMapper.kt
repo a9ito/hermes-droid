@@ -51,6 +51,9 @@ private fun ModelProviderDto.toDomain(currentModel: String?): ModelProvider {
         needsAuth = needsAuth,
         warning = warning,
         freeTier = freeTier,
+        // Either pending flag means the tier read hasn't settled, so the
+        // unavailable_models list is provisional (server fails closed to "all locked").
+        pricingPending = pricingPending || freeTierPending,
         models = options,
         featuredModelIds = featured,
     )

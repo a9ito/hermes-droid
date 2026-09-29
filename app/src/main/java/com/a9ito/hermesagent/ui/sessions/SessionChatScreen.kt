@@ -114,10 +114,15 @@ fun SessionChatScreen(
         },
     ) { innerPadding ->
         if (showModelPicker) {
+            // Opening the picker triggers a fresh, tier-settling fetch (refresh=true):
+            // the cheap startup load can report pricing_pending and lock every free
+            // model, so this is what actually unlocks them. Runs once per open.
+            LaunchedEffect(showModelPicker) { viewModel.refreshModelOptions() }
             ModelPickerDialog(
                 modelOptions = state.modelOptions,
                 flatModels = state.availableModels,
                 current = state.model,
+                refreshing = state.refreshingModels,
                 onPick = { showModelPicker = false; viewModel.selectModel(it) },
                 onDismiss = { showModelPicker = false },
             )
@@ -446,6 +451,7 @@ private fun ModelPickerDialog(
     modelOptions: ModelOptions?,
     flatModels: List<String>,
     current: String?,
+    refreshing: Boolean,
     onPick: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -453,10 +459,19 @@ private fun ModelPickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.session_model_title)) },
         text = {
-            if (modelOptions != null && !modelOptions.isEmpty) {
-                RichModelList(modelOptions, current, onPick)
-            } else {
-                FlatModelList(flatModels, current, onPick)
+            when {
+                // Fresh fetch in flight AND nothing useful to show yet: a bare
+                // spinner. If we already have a catalog we keep showing it (below)
+                // so the list doesn't flicker away on every re-open.
+                refreshing && (modelOptions == null || modelOptions.isEmpty) ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CircularProgressIndicator(modifier = Modifier.padding(4.dp))
+                        Text(stringResource(R.string.model_checking_tier), style = MaterialTheme.typography.bodyMedium)
+                    }
+                modelOptions != null && !modelOptions.isEmpty ->
+                    RichModelList(modelOptions, current, refreshing, onPick)
+                else ->
+                    FlatModelList(flatModels, current, onPick)
             }
         },
         confirmButton = {
@@ -466,8 +481,20 @@ private fun ModelPickerDialog(
 }
 
 @Composable
-private fun RichModelList(options: ModelOptions, current: String?, onPick: (String) -> Unit) {
+private fun RichModelList(options: ModelOptions, current: String?, refreshing: Boolean, onPick: (String) -> Unit) {
     LazyColumn {
+        if (refreshing) {
+            item(key = "refreshing_banner") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.padding(2.dp))
+                    Text(stringResource(R.string.model_checking_tier), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
         options.providers.forEach { provider ->
             item(key = "hdr_${provider.slug}") {
                 Row(
@@ -489,8 +516,14 @@ private fun RichModelList(options: ModelOptions, current: String?, onPick: (Stri
                 }
             }
             items(provider.models, key = { "${provider.slug}/${it.id}" }) { model ->
-                val selectable = !model.unavailable && !provider.needsAuth
-                val selected = model.id == current
+                // The current model is always selectable: it is demonstrably in use,
+                // so a stale/pending `unavailable` flag must never grey it out. While
+                // the provider's tier is still pending, availability is provisional —
+                // don't lock rows on an unsettled catalog.
+                val isCurrent = model.id == current
+                val selectable = isCurrent ||
+                    (!provider.needsAuth && (provider.pricingPending || !model.unavailable))
+                val selected = isCurrent
                 Surface(
                     color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
                     shape = MaterialTheme.shapes.small,
@@ -514,7 +547,11 @@ private fun RichModelList(options: ModelOptions, current: String?, onPick: (Stri
                             }
                             if (model.supportsReasoning) add(stringResource(R.string.model_reasoning))
                             if (model.supportsFastMode) add(stringResource(R.string.model_fast))
-                            if (model.unavailable) add(stringResource(R.string.model_unavailable))
+                            // A pending catalog's "unavailable" is not final, so don't
+                            // advertise it as a hard state; the current model never shows it.
+                            if (model.unavailable && !provider.pricingPending && !isCurrent) {
+                                add(stringResource(R.string.model_unavailable))
+                            }
                         }
                         if (hints.isNotEmpty()) {
                             Text(

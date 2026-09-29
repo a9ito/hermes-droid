@@ -61,6 +61,7 @@
     <string name="model_reasoning">reasoning</string>
     <string name="model_fast">fast</string>
     <string name="model_unavailable">unavailable on this tier</string>
+    <string name="model_checking_tier">Checking your tier…</string>
 
     <!-- ============================ Tools screen ============================ -->
     <string name="tools_tab_skills">Skills</string>

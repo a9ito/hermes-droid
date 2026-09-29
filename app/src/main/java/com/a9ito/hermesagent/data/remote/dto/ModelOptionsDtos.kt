@@ -35,6 +35,11 @@ data class ModelProviderDto(
     @SerialName("key_env") val keyEnv: String? = null,
     val warning: String? = null,
     @SerialName("free_tier") val freeTier: Boolean = false,
+    // Server is still resolving this provider's tier pricing/entitlement. While
+    // true it locks EVERY model into unavailable_models (fail-closed), so the
+    // availability flags are provisional until a refresh settles them.
+    @SerialName("pricing_pending") val pricingPending: Boolean = false,
+    @SerialName("free_tier_pending") val freeTierPending: Boolean = false,
     val models: List<String> = emptyList(),
     @SerialName("total_models") val totalModels: Int = 0,
     @SerialName("featured_models") val featuredModels: List<String> = emptyList(),
