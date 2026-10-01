@@ -29,6 +29,18 @@ data class ModelOptions(
         providers.filter { it.authenticated }
             .flatMap { p -> p.models.map { it.id } }
             .distinct()
+
+    /**
+     * The provider slug that owns [modelId], or null if no provider lists it.
+     *
+     * Used by the stateless Chat picker: `/v1/chat/completions` only honors a
+     * bare `model` when the instance sets `direct_model_requests: true`, so the
+     * client sends the provider alongside the model to switch reliably. The
+     * Hermes-native session/run endpoints honor a bare model and don't need it.
+     */
+    fun providerForModel(modelId: String): String? =
+        providers.firstOrNull { p -> p.models.any { it.id == modelId } }
+            ?.slug?.takeIf { it.isNotBlank() }
 }
 
 data class ModelProvider(

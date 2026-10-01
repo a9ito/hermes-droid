@@ -24,10 +24,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -39,6 +43,7 @@ import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.ui.common.ConnectionGate
+import com.a9ito.hermesagent.ui.common.ModelPickerDialog
 import com.a9ito.hermesagent.ui.messageRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,16 +56,32 @@ fun ChatScreen(
     ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showModelPicker by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.chat_title)) },
+                title = {
+                    Column {
+                        Text(stringResource(R.string.chat_title))
+                        state.model?.let {
+                            Text(it, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                },
                 actions = {
-                    if (state.configured && state.history.messages.isNotEmpty()) {
-                        IconButton(onClick = viewModel::clearHistory) {
-                            Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.chat_clear_history))
+                    if (state.configured) {
+                        val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+                        if (hasPicker) {
+                            TextButton(onClick = { showModelPicker = true }) {
+                                Text(stringResource(R.string.session_model_pick))
+                            }
+                        }
+                        if (state.history.messages.isNotEmpty()) {
+                            IconButton(onClick = viewModel::clearHistory) {
+                                Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.chat_clear_history))
+                            }
                         }
                     }
                 },
@@ -77,6 +98,21 @@ fun ChatScreen(
                 modifier = Modifier.padding(innerPadding),
             )
             return@Scaffold
+        }
+
+        if (showModelPicker) {
+            // Opening the picker triggers a fresh, tier-settling fetch (refresh=true):
+            // the cheap startup load can report pricing_pending and lock every free
+            // model, so this is what actually unlocks them. Runs once per open.
+            LaunchedEffect(showModelPicker) { viewModel.refreshModelOptions() }
+            ModelPickerDialog(
+                modelOptions = state.modelOptions,
+                flatModels = state.availableModels,
+                current = state.model,
+                refreshing = state.refreshingModels,
+                onPick = { showModelPicker = false; viewModel.selectModel(it) },
+                onDismiss = { showModelPicker = false },
+            )
         }
 
         ChatContent(

@@ -7,6 +7,7 @@ import com.a9ito.hermesagent.core.AgentRun
 import com.a9ito.hermesagent.core.Capabilities
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.RunApproval
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
@@ -18,9 +19,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** One line in the live run transcript (tool activity, reasoning, commentary). */
+/** One line in the live run transcript (tool activity, mid-turn commentary). */
 data class RunLogLine(val kind: Kind, val text: String) {
-    enum class Kind { TOOL_START, TOOL_DONE, TOOL_ERROR, REASONING, INTERIM }
+    enum class Kind { TOOL_START, TOOL_DONE, TOOL_ERROR, INTERIM }
 }
 
 data class RunsUiState(
@@ -33,9 +34,23 @@ data class RunsUiState(
     val submitting: Boolean = false,
     /** Live-streamed assistant answer, accumulated from message.delta. */
     val answer: String = "",
+    /**
+     * Reasoning text, accumulated across reasoning.available events into one
+     * buffer and shown in a collapsible panel — the same treatment the session
+     * chat gives a turn's thinking, kept separate from the tool-activity [log].
+     */
+    val reasoning: String = "",
     val log: List<RunLogLine> = emptyList(),
     val approval: RunApproval? = null,
     val errorKind: ErrorKind? = null,
+    /** Model picked for the next run; null = instance default alias. */
+    val model: String? = null,
+    /** Flat /v1/models id list, fallback when model_options is unavailable. */
+    val availableModels: List<String> = emptyList(),
+    /** Rich provider catalog when the instance advertises model_options; null otherwise. */
+    val modelOptions: ModelOptions? = null,
+    /** True while a picker-triggered fresh /api/model/options fetch is in flight. */
+    val refreshingModels: Boolean = false,
 ) {
     val isActive: Boolean get() = run != null && run.status.let { !it.isTerminal }
     val canSteer: Boolean get() = run?.status?.canSteer == true
@@ -68,7 +83,10 @@ class RunsViewModel(
                 val firstConfigured = c.isComplete && !config.isComplete
                 config = c
                 _state.update { it.copy(configured = c.isComplete, configLoaded = true) }
-                if (firstConfigured) loadCapabilities()
+                if (firstConfigured) {
+                    loadCapabilities()
+                    loadModelCatalog()
+                }
             }
         }
     }
@@ -85,14 +103,53 @@ class RunsViewModel(
         }
     }
 
+    /**
+     * Load the model catalog for the picker. Prefer the rich /api/model/options
+     * catalog; fall back to the flat /v1/models id list. Failures are non-fatal —
+     * the picker just stays hidden — so they never touch errorKind.
+     */
+    private fun loadModelCatalog() {
+        if (!config.isComplete) return
+        viewModelScope.launch {
+            when (val opts = repository.fetchModelOptions(config)) {
+                is ApiResult.Success -> _state.update { it.copy(modelOptions = opts.data) }
+                is ApiResult.Failure -> Unit
+            }
+            if (_state.value.modelOptions?.isEmpty != false) {
+                (repository.fetchModels(config) as? ApiResult.Success)?.let { res ->
+                    _state.update { it.copy(availableModels = res.data) }
+                }
+            }
+        }
+    }
+
+    /**
+     * Re-fetch the catalog with refresh=true so the server settles free-tier
+     * pricing/entitlement synchronously. Called when the picker opens, so the
+     * round-trip only happens on demand. Mirrors the chat/session treatment.
+     */
+    fun refreshModelOptions() {
+        if (!config.isComplete || _state.value.refreshingModels) return
+        _state.update { it.copy(refreshingModels = true) }
+        viewModelScope.launch {
+            when (val opts = repository.fetchModelOptions(config, refresh = true)) {
+                is ApiResult.Success -> _state.update { it.copy(modelOptions = opts.data, refreshingModels = false) }
+                is ApiResult.Failure -> _state.update { it.copy(refreshingModels = false) }
+            }
+        }
+    }
+
+    /** Pick the model for the next run (local to this screen). */
+    fun selectModel(model: String) = _state.update { it.copy(model = model) }
+
     fun submit() {
         val text = _state.value.input.trim()
         if (!config.isComplete || text.isEmpty() || _state.value.isActive) return
         _state.update {
-            it.copy(submitting = true, errorKind = null, answer = "", log = emptyList(), approval = null)
+            it.copy(submitting = true, errorKind = null, answer = "", reasoning = "", log = emptyList(), approval = null)
         }
         viewModelScope.launch {
-            when (val res = repository.createRun(config, text)) {
+            when (val res = repository.createRun(config, text, model = _state.value.model)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(submitting = false, input = "", run = res.data) }
                     watch(res.data.runId)
@@ -120,7 +177,15 @@ class RunsViewModel(
         when (ev) {
             is RunStreamEvent.Delta -> _state.update { it.copy(answer = it.answer + ev.text) }
             is RunStreamEvent.Interim -> addLog(RunLogLine.Kind.INTERIM, ev.text)
-            is RunStreamEvent.Reasoning -> addLog(RunLogLine.Kind.REASONING, ev.text)
+            // Accumulate reasoning into one buffer for the collapsible panel, mirroring
+            // the session chat's per-turn thinking (not interleaved into the tool log).
+            // Each reasoning.available carries one iteration's thinking (server-capped),
+            // so separate distinct emissions with a blank line instead of mashing them.
+            is RunStreamEvent.Reasoning ->
+                if (ev.text.isNotBlank()) _state.update {
+                    val sep = if (it.reasoning.isEmpty()) "" else "\n\n"
+                    it.copy(reasoning = it.reasoning + sep + ev.text.trim())
+                }
             is RunStreamEvent.ToolStarted ->
                 addLog(RunLogLine.Kind.TOOL_START, ev.preview?.let { "${ev.tool}: $it" } ?: ev.tool)
             is RunStreamEvent.ToolCompleted ->
