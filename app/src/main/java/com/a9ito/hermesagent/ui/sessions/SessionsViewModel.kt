@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.SessionSummary
 import com.a9ito.hermesagent.core.filteredBy
 import com.a9ito.hermesagent.core.sortedForDisplay
@@ -26,6 +27,12 @@ data class SessionsUiState(
     val openSessionId: String? = null,
     /** Live search query for filtering the list (title/model/preview). */
     val query: String = "",
+    /** Flat /v1/models id list, fallback when model_options is unavailable. */
+    val availableModels: List<String> = emptyList(),
+    /** Rich provider catalog when the instance advertises model_options; null otherwise. */
+    val modelOptions: ModelOptions? = null,
+    /** True while a picker-triggered fresh /api/model/options fetch is in flight. */
+    val refreshingModels: Boolean = false,
 ) {
     /** Sessions actually shown: server list filtered by [query] (already sorted). */
     val visibleSessions: List<SessionSummary> get() = sessions.filteredBy(query)
@@ -51,7 +58,48 @@ class SessionsViewModel(
                 val firstConfigured = c.isComplete && !config.isComplete
                 config = c
                 _state.update { it.copy(configured = c.isComplete, configLoaded = true) }
-                if (firstConfigured) refresh()
+                if (firstConfigured) {
+                    refresh()
+                    loadModelCatalog()
+                }
+            }
+        }
+    }
+
+    /**
+     * Load the model catalog for the new-session picker. Prefer the rich
+     * /api/model/options catalog; fall back to the flat /v1/models id list.
+     * Failures are non-fatal — the picker just stays hidden — so they never
+     * touch errorKind.
+     */
+    private fun loadModelCatalog() {
+        if (!config.isComplete) return
+        viewModelScope.launch {
+            when (val opts = repository.fetchModelOptions(config)) {
+                is ApiResult.Success -> _state.update { it.copy(modelOptions = opts.data) }
+                is ApiResult.Failure -> Unit
+            }
+            if (_state.value.modelOptions?.isEmpty != false) {
+                (repository.fetchModels(config) as? ApiResult.Success)?.let { res ->
+                    _state.update { it.copy(availableModels = res.data) }
+                }
+            }
+        }
+    }
+
+    /**
+     * Re-fetch the catalog with refresh=true so the server settles free-tier
+     * pricing/entitlement synchronously. Called when the new-session picker
+     * opens, so the ~15s round-trip only happens on demand. Mirrors the
+     * chat/runs treatment.
+     */
+    fun refreshModelOptions() {
+        if (!config.isComplete || _state.value.refreshingModels) return
+        _state.update { it.copy(refreshingModels = true) }
+        viewModelScope.launch {
+            when (val opts = repository.fetchModelOptions(config, refresh = true)) {
+                is ApiResult.Success -> _state.update { it.copy(modelOptions = opts.data, refreshingModels = false) }
+                is ApiResult.Failure -> _state.update { it.copy(refreshingModels = false) }
             }
         }
     }
@@ -72,11 +120,15 @@ class SessionsViewModel(
         }
     }
 
-    /** Create a new empty session and open it immediately. */
-    fun createAndOpen(title: String? = null) {
+    /**
+     * Create a new session and open it immediately. [model] optionally pins the
+     * session to a model, [systemPrompt] optionally seeds a custom system prompt;
+     * both default to null for a plain new session (the FAB path).
+     */
+    fun createAndOpen(title: String? = null, model: String? = null, systemPrompt: String? = null) {
         if (!config.isComplete) return
         viewModelScope.launch {
-            when (val res = repository.createSession(config, title)) {
+            when (val res = repository.createSession(config, title, model, systemPrompt)) {
                 is ApiResult.Success -> {
                     refresh()
                     _state.update { it.copy(openSessionId = res.data.id) }

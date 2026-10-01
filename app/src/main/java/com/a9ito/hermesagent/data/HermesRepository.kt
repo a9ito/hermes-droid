@@ -281,10 +281,27 @@ class HermesRepository(
         }
     }
 
-    suspend fun createSession(config: ConnectionConfig, title: String?): ApiResult<SessionSummary> {
+    /**
+     * Create a session. [model] pins the session to a model up front (the native
+     * session endpoints honor a bare model, so no provider is needed here, unlike
+     * the stateless completions path); [systemPrompt] seeds a custom system prompt.
+     * Both are omitted when blank so a plain new session stays {"title": ...}.
+     */
+    suspend fun createSession(
+        config: ConnectionConfig,
+        title: String?,
+        model: String? = null,
+        systemPrompt: String? = null,
+    ): ApiResult<SessionSummary> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
-            val env = apiFor(config).createSession(CreateSessionRequest(title = title?.takeIf { it.isNotBlank() }))
+            val env = apiFor(config).createSession(
+                CreateSessionRequest(
+                    title = title?.takeIf { it.isNotBlank() },
+                    model = model?.takeIf { it.isNotBlank() },
+                    systemPrompt = systemPrompt?.takeIf { it.isNotBlank() },
+                )
+            )
             val session = env.session ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
             ApiResult.Success(session.toSummary())
         } catch (t: Throwable) {
