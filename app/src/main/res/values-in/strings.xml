@@ -59,6 +59,9 @@
     <string name="sessions_locked_title">Butuh koneksi</string>
     <string name="sessions_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk menjelajahi sesi.</string>
     <string name="session_chat_title">Sesi</string>
+    <string name="session_overflow">Opsi lain</string>
+    <string name="session_show_compacted">Tampilkan turn terkompaksi</string>
+    <string name="session_hide_compacted">Sembunyikan turn terkompaksi</string>
     <string name="session_model_pick">Model</string>
     <string name="session_model_title">Model untuk sesi ini</string>
     <!-- Pemilih model kaya (dari /api/model/options) -->
