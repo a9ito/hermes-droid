@@ -28,9 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,6 +44,8 @@ import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.AgentRun
 import com.a9ito.hermesagent.ui.common.ConnectionGate
+import com.a9ito.hermesagent.ui.common.ModelPickerDialog
+import com.a9ito.hermesagent.ui.common.ReasoningPanel
 import com.a9ito.hermesagent.ui.messageRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,11 +58,47 @@ fun RunsScreen(
     ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showModelPicker by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_runs)) }) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(stringResource(R.string.nav_runs))
+                        state.model?.let {
+                            Text(it, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                },
+                actions = {
+                    if (state.configured && state.capabilities?.supportsRunControl != false) {
+                        val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+                        if (hasPicker) {
+                            TextButton(onClick = { showModelPicker = true }) {
+                                Text(stringResource(R.string.session_model_pick))
+                            }
+                        }
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
+        if (showModelPicker) {
+            // Opening the picker triggers a fresh, tier-settling fetch (refresh=true):
+            // the cheap startup load can report pricing_pending and lock every free
+            // model, so this is what actually unlocks them. Runs once per open.
+            LaunchedEffect(showModelPicker) { viewModel.refreshModelOptions() }
+            ModelPickerDialog(
+                modelOptions = state.modelOptions,
+                flatModels = state.availableModels,
+                current = state.model,
+                refreshing = state.refreshingModels,
+                onPick = { showModelPicker = false; viewModel.selectModel(it) },
+                onDismiss = { showModelPicker = false },
+            )
+        }
         when {
             state.configLoaded && !state.configured -> ConnectionGate(
                 title = stringResource(R.string.runs_locked_title),
@@ -155,6 +193,11 @@ private fun RunsContent(
             }
         }
 
+        // Collapsible reasoning — same treatment as the session chat, kept out of the tool log.
+        if (state.reasoning.isNotBlank()) {
+            ReasoningPanel(state.reasoning, modifier = Modifier.fillMaxWidth())
+        }
+
         // Live activity log.
         if (state.log.isNotEmpty()) {
             Text(stringResource(R.string.runs_activity), style = MaterialTheme.typography.labelLarge)
@@ -224,14 +267,12 @@ private fun RunStatusRow(run: AgentRun) {
 private fun RunLogRow(line: RunLogLine) {
     val color = when (line.kind) {
         RunLogLine.Kind.TOOL_ERROR -> MaterialTheme.colorScheme.error
-        RunLogLine.Kind.REASONING -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.onSurface
     }
     val prefix = when (line.kind) {
         RunLogLine.Kind.TOOL_START -> "▶ "
         RunLogLine.Kind.TOOL_DONE -> "✓ "
         RunLogLine.Kind.TOOL_ERROR -> "✗ "
-        RunLogLine.Kind.REASONING -> "… "
         RunLogLine.Kind.INTERIM -> "» "
     }
     Text(

@@ -159,11 +159,13 @@ class HermesRepository(
     suspend fun sendChat(
         config: ConnectionConfig,
         history: List<ChatMessageDto>,
+        model: String? = null,
+        provider: String? = null,
     ): ApiResult<String> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
             val api = apiFor(config)
-            val resp = api.chatCompletion(ChatCompletionRequest(messages = history, stream = false))
+            val resp = api.chatCompletion(chatRequest(history, stream = false, model = model, provider = provider))
             ApiResult.Success(resp.firstText())
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
@@ -177,13 +179,34 @@ class HermesRepository(
     fun streamChat(
         config: ConnectionConfig,
         history: List<ChatMessageDto>,
+        model: String? = null,
+        provider: String? = null,
     ): Flow<String> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        val body = ChatCompletionRequest(messages = history, stream = true)
+        val body = chatRequest(history, stream = true, model = model, provider = provider)
         val payload = json.encodeToString(ChatCompletionRequest.serializer(), body)
         streamer.stream(config.baseUrl, payload).collect { emit(it) }
     }
+
+    /**
+     * Build the stateless completions request. A picked [model] overrides the
+     * default alias; [provider] is sent alongside it so the switch is honored
+     * even when the instance leaves `direct_model_requests` off (a bare model
+     * is otherwise ignored there — unlike the Hermes-native session/run paths).
+     */
+    private fun chatRequest(
+        history: List<ChatMessageDto>,
+        stream: Boolean,
+        model: String?,
+        provider: String?,
+    ): ChatCompletionRequest =
+        ChatCompletionRequest(
+            model = model?.takeIf { it.isNotBlank() } ?: "hermes-agent",
+            messages = history,
+            stream = stream,
+            provider = provider?.takeIf { it.isNotBlank() },
+        )
 
     fun classify(t: Throwable): ErrorKind = ErrorMapper.classify(t)
 

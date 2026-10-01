@@ -134,6 +134,17 @@ class ModelOptionsMapperTest {
         assertFalse("gpt-5" in ids)
     }
 
+    @Test fun providerForModelResolvesOwningSlug() {
+        // The Chat picker pairs a picked model with its provider; resolve both auth states.
+        val opts = parse(realPayload)
+        assertEquals("nous", opts.providerForModel("hermes-4"))
+        assertEquals("openai", opts.providerForModel("gpt-5"))
+    }
+
+    @Test fun providerForModelUnknownIsNull() {
+        assertNull(parse(realPayload).providerForModel("does-not-exist"))
+    }
+
     @Test fun toleratesMissingOptionalMapsAndFutureKeys() {
         val payload = """{"model":"m","provider":"p","providers":[
             {"slug":"p","name":"P","models":["m"],"brand_new_key":123}]}"""
