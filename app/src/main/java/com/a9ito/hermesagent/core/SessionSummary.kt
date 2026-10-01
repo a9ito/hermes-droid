@@ -14,6 +14,8 @@ data class SessionSummary(
     val pinned: Boolean = false,
     val archived: Boolean = false,
     val isFork: Boolean = false,
+    /** Origin surface that created the session (e.g. "cli", "discord", "api_server"). */
+    val source: String? = null,
 )
 
 /** One message in a session transcript, reduced to what the UI renders. */

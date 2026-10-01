@@ -71,4 +71,25 @@ class SessionOrderingTest {
         val input = listOf(full("1", "alpha"), full("2", "beta"))
         assertEquals(emptyList<String>(), input.filteredBy("zzz").map { it.id })
     }
+
+    // -- filteredBySource / distinctSources ---------------------------------------
+
+    private fun src(id: String, source: String?) =
+        SessionSummary(id = id, title = id, source = source)
+
+    @Test fun nullOrBlankSourceKeepsEverything() {
+        val input = listOf(src("1", "cli"), src("2", "discord"))
+        assertEquals(input, input.filteredBySource(null))
+        assertEquals(input, input.filteredBySource("  "))
+    }
+
+    @Test fun sourceFilterKeepsOnlyMatchingRows() {
+        val input = listOf(src("1", "cli"), src("2", "discord"), src("3", "cli"))
+        assertEquals(listOf("1", "3"), input.filteredBySource("cli").map { it.id })
+    }
+
+    @Test fun distinctSourcesAreUniqueSortedAndSkipBlanks() {
+        val input = listOf(src("1", "discord"), src("2", "cli"), src("3", "discord"), src("4", null), src("5", ""))
+        assertEquals(listOf("cli", "discord"), input.distinctSources())
+    }
 }

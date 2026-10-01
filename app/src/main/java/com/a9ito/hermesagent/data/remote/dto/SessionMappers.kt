@@ -25,6 +25,7 @@ fun SessionDto.toSummary(): SessionSummary = SessionSummary(
     pinned = pinned,
     archived = archived,
     isFork = parentSessionId != null,
+    source = source?.takeIf { it.isNotBlank() },
 )
 
 private fun roleOf(raw: String?): SessionMessage.Role = when (raw?.lowercase()) {

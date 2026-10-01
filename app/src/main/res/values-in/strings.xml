@@ -46,6 +46,7 @@
     <string name="sessions_archive_action">Arsipkan</string>
     <string name="sessions_search_hint">Cari sesi</string>
     <string name="sessions_search_clear">Hapus pencarian</string>
+    <string name="sessions_source_all">Semua</string>
     <string name="sessions_search_empty">Nggak ada sesi yang cocok dengan \"%1$s\".</string>
     <string name="sessions_archive_title">Arsipkan sesi?</string>
     <string name="sessions_archive_message">\"%1$s\" akan disembunyikan dari daftar ini. Sesi tetap tersimpan di instance-mu dan bisa dipulihkan dari desktop.</string>

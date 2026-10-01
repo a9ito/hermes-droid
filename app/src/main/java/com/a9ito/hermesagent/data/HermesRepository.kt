@@ -254,10 +254,18 @@ class HermesRepository(
 
     // ---- Sessions ----
 
-    suspend fun listSessions(config: ConnectionConfig): ApiResult<List<SessionSummary>> {
+    /**
+     * List sessions. [includeChildren] also returns forked/child sessions
+     * (default on, so a fork the user just made is visible instead of silently
+     * absent). Archived rows are dropped client-side.
+     */
+    suspend fun listSessions(
+        config: ConnectionConfig,
+        includeChildren: Boolean = true,
+    ): ApiResult<List<SessionSummary>> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
-            val rows = apiFor(config).listSessions().data
+            val rows = apiFor(config).listSessions(includeChildren = includeChildren).data
                 .filter { !it.archived }
                 .map { it.toSummary() }
             ApiResult.Success(rows)
