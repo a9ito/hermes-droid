@@ -26,6 +26,14 @@
 
     <!-- ============================ Sessions screen ============================ -->
     <string name="sessions_new">New session</string>
+    <!-- New-session dialog (optional model + system prompt) -->
+    <string name="sessions_new_title">New session</string>
+    <string name="sessions_new_name_label">Title (optional)</string>
+    <string name="sessions_new_system_label">System prompt (optional)</string>
+    <string name="sessions_new_model_label">Model</string>
+    <string name="sessions_new_model_default">Instance default</string>
+    <string name="sessions_new_create">Create</string>
+    <string name="sessions_new_advanced">Options</string>
     <string name="sessions_empty_title">No sessions yet</string>
     <string name="sessions_empty_subtitle">Tap + to start a persistent conversation. Sessions are stored on your instance and shared with every Hermes surface.</string>
     <string name="sessions_message_count">%1$d messages</string>

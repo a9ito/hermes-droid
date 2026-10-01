@@ -130,4 +130,24 @@ class DtoSerializationTest {
         assertFalse(encoded.contains("model"))
         assertFalse(encoded.contains("session_id"))
     }
+
+    // A new session can be pinned to a model + seeded with a system prompt up
+    // front. The native session endpoint honors a bare model (no provider needed).
+    // explicitNulls=false must omit model/system_prompt when they are not set, so
+    // a plain new session stays {"title":...}.
+    @Test fun createSessionEncodesModelAndSystemPrompt() {
+        val encoded = json.encodeToString(
+            CreateSessionRequest.serializer(),
+            CreateSessionRequest(title = "t", model = "hermes-4", systemPrompt = "be terse"),
+        )
+        assertTrue(encoded.contains(""""model":"hermes-4""""))
+        assertTrue(encoded.contains(""""system_prompt":"be terse""""))
+    }
+
+    @Test fun createSessionOmitsUnsetModelAndSystemPrompt() {
+        val encoded = json.encodeToString(CreateSessionRequest.serializer(), CreateSessionRequest(title = "t"))
+        assertEquals(""""title":"t"""", encoded.trim('{', '}'))
+        assertFalse(encoded.contains("model"))
+        assertFalse(encoded.contains("system_prompt"))
+    }
 }

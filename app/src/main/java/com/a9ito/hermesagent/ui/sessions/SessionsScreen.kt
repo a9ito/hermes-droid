@@ -33,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.SessionSummary
 import com.a9ito.hermesagent.ui.common.ConnectionGate
+import com.a9ito.hermesagent.ui.common.ModelPickerDialog
 import com.a9ito.hermesagent.ui.messageRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +60,7 @@ fun SessionsScreen(
     ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showNewSession by rememberSaveable { mutableStateOf(false) }
 
     // A freshly created (or selected) session id -> navigate to its chat. Done in
     // a LaunchedEffect so navigation is a post-composition side effect, never run
@@ -85,7 +88,7 @@ fun SessionsScreen(
         },
         floatingActionButton = {
             if (state.configured) {
-                FloatingActionButton(onClick = { viewModel.createAndOpen() }) {
+                FloatingActionButton(onClick = { showNewSession = true }) {
                     Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.sessions_new))
                 }
             }
@@ -100,6 +103,18 @@ fun SessionsScreen(
                 modifier = Modifier.padding(innerPadding),
             )
             return@Scaffold
+        }
+
+        if (showNewSession) {
+            NewSessionDialog(
+                state = state,
+                onRefreshModels = viewModel::refreshModelOptions,
+                onDismiss = { showNewSession = false },
+                onCreate = { title, model, systemPrompt ->
+                    showNewSession = false
+                    viewModel.createAndOpen(title, model, systemPrompt)
+                },
+            )
         }
 
         SessionsContent(
@@ -253,6 +268,85 @@ private fun SessionsContent(
             },
         )
     }
+}
+
+@Composable
+private fun NewSessionDialog(
+    state: SessionsUiState,
+    onRefreshModels: () -> Unit,
+    onDismiss: () -> Unit,
+    onCreate: (title: String?, model: String?, systemPrompt: String?) -> Unit,
+) {
+    var title by rememberSaveable { mutableStateOf("") }
+    var systemPrompt by rememberSaveable { mutableStateOf("") }
+    var model by rememberSaveable { mutableStateOf<String?>(null) }
+    var showModelPicker by rememberSaveable { mutableStateOf(false) }
+    val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+
+    if (showModelPicker) {
+        // Opening the picker triggers a fresh, tier-settling fetch (refresh=true):
+        // the cheap startup load can report pricing_pending and lock every free
+        // model, so this is what actually unlocks them. Runs once per open.
+        LaunchedEffect(showModelPicker) { onRefreshModels() }
+        ModelPickerDialog(
+            modelOptions = state.modelOptions,
+            flatModels = state.availableModels,
+            current = model,
+            refreshing = state.refreshingModels,
+            onPick = { showModelPicker = false; model = it },
+            onDismiss = { showModelPicker = false },
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.sessions_new_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.sessions_new_name_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = systemPrompt,
+                    onValueChange = { systemPrompt = it },
+                    label = { Text(stringResource(R.string.sessions_new_system_label)) },
+                    minLines = 2,
+                    maxLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (hasPicker) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = model ?: stringResource(R.string.sessions_new_model_default),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = { showModelPicker = true }) {
+                            Text(stringResource(R.string.sessions_new_model_label))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onCreate(title.ifBlank { null }, model, systemPrompt.ifBlank { null }) }) {
+                Text(stringResource(R.string.sessions_new_create))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_dismiss)) }
+        },
+    )
 }
 
 @Composable
