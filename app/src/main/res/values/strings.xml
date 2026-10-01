@@ -121,6 +121,9 @@
 
     <!-- ============================ Jobs screen ============================ -->
     <string name="jobs_new">New job</string>
+    <string name="jobs_edit">Edit job</string>
+    <string name="jobs_edit_action">Edit</string>
+    <string name="jobs_save_confirm">Save</string>
     <string name="jobs_empty_title">No scheduled jobs</string>
     <string name="jobs_empty_subtitle">Tap + to schedule a recurring prompt. Jobs run on your instance on their schedule, even when the app is closed.</string>
     <string name="jobs_error_prefix">Could not load jobs: %1$s</string>

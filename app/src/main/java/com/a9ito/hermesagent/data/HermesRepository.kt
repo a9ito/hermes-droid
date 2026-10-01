@@ -23,6 +23,7 @@ import com.a9ito.hermesagent.data.remote.dto.ApprovalRequestBody
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionPayload
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
 import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
+import com.a9ito.hermesagent.data.remote.dto.UpdateJobRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateRunRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
 import com.a9ito.hermesagent.data.remote.dto.ForkSessionRequest
@@ -403,6 +404,38 @@ class HermesRepository(
         return try {
             val env = apiFor(config).createJob(
                 CreateJobRequest(name = name.trim(), schedule = schedule.trim(), prompt = prompt.trim()))
+            val job = env.job ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
+            ApiResult.Success(job.toDomain())
+        } catch (t: Throwable) {
+            ApiResult.Failure(ErrorMapper.classify(t))
+        }
+    }
+
+    /**
+     * PATCH /api/jobs/{id}. Only non-null fields are sent (explicitNulls=false),
+     * so this is a partial update: pass just the fields the user changed. The
+     * server whitelists name/schedule/prompt/enabled (among others) and ignores
+     * the rest.
+     */
+    suspend fun updateJob(
+        config: ConnectionConfig,
+        id: String,
+        name: String? = null,
+        schedule: String? = null,
+        prompt: String? = null,
+        enabled: Boolean? = null,
+    ): ApiResult<CronJob> {
+        if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
+        return try {
+            val env = apiFor(config).updateJob(
+                id,
+                UpdateJobRequest(
+                    name = name?.trim()?.takeIf { it.isNotBlank() },
+                    schedule = schedule?.trim()?.takeIf { it.isNotBlank() },
+                    prompt = prompt?.trim(),
+                    enabled = enabled,
+                ),
+            )
             val job = env.job ?: return ApiResult.Failure(ErrorKind.UNEXPECTED)
             ApiResult.Success(job.toDomain())
         } catch (t: Throwable) {

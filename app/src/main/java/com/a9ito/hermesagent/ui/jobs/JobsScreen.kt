@@ -59,6 +59,9 @@ fun JobsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var showCreate by rememberSaveable { mutableStateOf(false) }
+    // Job currently being edited (its id), or null. Stored by id so the dialog
+    // re-resolves the row from fresh state rather than holding a stale copy.
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val runMsg = stringResource(R.string.jobs_run_triggered)
     val failMsg = stringResource(R.string.jobs_action_failed)
@@ -112,17 +115,44 @@ fun JobsScreen(
             onResume = viewModel::resume,
             onRun = viewModel::runNow,
             onDelete = viewModel::delete,
+            onEdit = { editingId = it },
         )
     }
 
     if (showCreate) {
-        CreateJobDialog(
-            onCreate = { name, schedule, prompt ->
+        JobDialog(
+            titleRes = R.string.jobs_new,
+            confirmRes = R.string.jobs_create_confirm,
+            initialName = "",
+            initialSchedule = "",
+            initialPrompt = "",
+            onConfirm = { name, schedule, prompt ->
                 showCreate = false
                 viewModel.create(name, schedule, prompt)
             },
             onDismiss = { showCreate = false },
         )
+    }
+
+    editingId?.let { id ->
+        val job = state.jobs.firstOrNull { it.id == id }
+        if (job == null) {
+            // Row vanished (deleted/refreshed) while the dialog was open: close it.
+            editingId = null
+        } else {
+            JobDialog(
+                titleRes = R.string.jobs_edit,
+                confirmRes = R.string.jobs_save_confirm,
+                initialName = job.name,
+                initialSchedule = job.scheduleDisplay,
+                initialPrompt = job.prompt.orEmpty(),
+                onConfirm = { name, schedule, prompt ->
+                    editingId = null
+                    viewModel.update(id, name, schedule, prompt)
+                },
+                onDismiss = { editingId = null },
+            )
+        }
     }
 }
 
@@ -134,6 +164,7 @@ private fun JobsContent(
     onResume: (String) -> Unit,
     onRun: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onEdit: (String) -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf<CronJob?>(null) }
     val errorKind = state.errorKind
@@ -168,6 +199,7 @@ private fun JobsContent(
                         onResume = { onResume(job.id) },
                         onRun = { onRun(job.id) },
                         onDelete = { confirmDelete = job },
+                        onEdit = { onEdit(job.id) },
                     )
                 }
             }
@@ -198,6 +230,7 @@ private fun JobRow(
     onResume: () -> Unit,
     onRun: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val stateLabel = when (job.state) {
         CronJob.State.SCHEDULED -> stringResource(R.string.jobs_state_scheduled)
@@ -225,6 +258,7 @@ private fun JobRow(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onRun) { Text(stringResource(R.string.jobs_run)) }
+                TextButton(onClick = onEdit) { Text(stringResource(R.string.jobs_edit_action)) }
                 if (job.canPause) TextButton(onClick = onPause) { Text(stringResource(R.string.jobs_pause)) }
                 if (job.canResume) TextButton(onClick = onResume) { Text(stringResource(R.string.jobs_resume)) }
                 TextButton(onClick = onDelete) { Text(stringResource(R.string.jobs_delete_confirm)) }
@@ -234,16 +268,23 @@ private fun JobRow(
 }
 
 @Composable
-private fun CreateJobDialog(
-    onCreate: (name: String, schedule: String, prompt: String) -> Unit,
+private fun JobDialog(
+    titleRes: Int,
+    confirmRes: Int,
+    initialName: String,
+    initialSchedule: String,
+    initialPrompt: String,
+    onConfirm: (name: String, schedule: String, prompt: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var schedule by rememberSaveable { mutableStateOf("") }
-    var prompt by rememberSaveable { mutableStateOf("") }
+    // Keyed on the initial values so reopening the dialog for a different job
+    // (or switching create->edit) reseeds the fields instead of keeping stale text.
+    var name by rememberSaveable(initialName) { mutableStateOf(initialName) }
+    var schedule by rememberSaveable(initialSchedule) { mutableStateOf(initialSchedule) }
+    var prompt by rememberSaveable(initialPrompt) { mutableStateOf(initialPrompt) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.jobs_new)) },
+        title = { Text(stringResource(titleRes)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
@@ -266,9 +307,9 @@ private fun CreateJobDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onCreate(name, schedule, prompt) },
+                onClick = { onConfirm(name, schedule, prompt) },
                 enabled = name.isNotBlank() && schedule.isNotBlank(),
-            ) { Text(stringResource(R.string.jobs_create_confirm)) }
+            ) { Text(stringResource(confirmRes)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_dismiss)) }

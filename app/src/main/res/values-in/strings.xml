@@ -121,6 +121,9 @@
 
     <!-- ============================ Layar Tugas ============================ -->
     <string name="jobs_new">Tugas baru</string>
+    <string name="jobs_edit">Edit tugas</string>
+    <string name="jobs_edit_action">Edit</string>
+    <string name="jobs_save_confirm">Simpan</string>
     <string name="jobs_empty_title">Belum ada tugas terjadwal</string>
     <string name="jobs_empty_subtitle">Ketuk + untuk menjadwalkan prompt berulang. Tugas berjalan di instance kamu sesuai jadwal, bahkan saat aplikasi ditutup.</string>
     <string name="jobs_error_prefix">Tidak bisa memuat tugas: %1$s</string>
