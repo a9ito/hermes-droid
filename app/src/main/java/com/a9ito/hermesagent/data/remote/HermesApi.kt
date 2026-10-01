@@ -2,7 +2,6 @@ package com.a9ito.hermesagent.data.remote
 
 import com.a9ito.hermesagent.data.remote.dto.ApprovalRequestBody
 import com.a9ito.hermesagent.data.remote.dto.CapabilitiesDto
-import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
 import com.a9ito.hermesagent.data.remote.dto.ChatCompletionResponse
 import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateSessionRequest
@@ -86,7 +85,7 @@ interface HermesApi {
     suspend fun capabilities(): CapabilitiesDto
 
     @POST("v1/chat/completions")
-    suspend fun chatCompletion(@Body request: ChatCompletionRequest): ChatCompletionResponse
+    suspend fun chatCompletion(@Body body: kotlinx.serialization.json.JsonElement): ChatCompletionResponse
 
     // ---- Sessions ----
 

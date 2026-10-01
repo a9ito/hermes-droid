@@ -20,7 +20,7 @@ import com.a9ito.hermesagent.data.remote.SessionChatStreamer
 import com.a9ito.hermesagent.data.remote.SessionStreamEvent
 import com.a9ito.hermesagent.data.remote.HttpStatusException
 import com.a9ito.hermesagent.data.remote.dto.ApprovalRequestBody
-import com.a9ito.hermesagent.data.remote.dto.ChatCompletionRequest
+import com.a9ito.hermesagent.data.remote.dto.ChatCompletionPayload
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
 import com.a9ito.hermesagent.data.remote.dto.CreateJobRequest
 import com.a9ito.hermesagent.data.remote.dto.CreateRunRequest
@@ -161,11 +161,13 @@ class HermesRepository(
         history: List<ChatMessageDto>,
         model: String? = null,
         provider: String? = null,
+        attachments: List<ChatAttachment> = emptyList(),
     ): ApiResult<String> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
             val api = apiFor(config)
-            val resp = api.chatCompletion(chatRequest(history, stream = false, model = model, provider = provider))
+            val body = ChatCompletionPayload.build(model, history, stream = false, provider = provider, attachments = attachments)
+            val resp = api.chatCompletion(body)
             ApiResult.Success(resp.firstText())
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
@@ -175,38 +177,20 @@ class HermesRepository(
     /**
      * Streaming chat turn. Emits incremental assistant text deltas. The caller
      * accumulates them; errors propagate as exceptions to be classified.
+     * [attachments] attach inline images to the last (current) user turn.
      */
     fun streamChat(
         config: ConnectionConfig,
         history: List<ChatMessageDto>,
         model: String? = null,
         provider: String? = null,
+        attachments: List<ChatAttachment> = emptyList(),
     ): Flow<String> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        val body = chatRequest(history, stream = true, model = model, provider = provider)
-        val payload = json.encodeToString(ChatCompletionRequest.serializer(), body)
+        val payload = ChatCompletionPayload.encode(json, model, history, stream = true, provider = provider, attachments = attachments)
         streamer.stream(config.baseUrl, payload).collect { emit(it) }
     }
-
-    /**
-     * Build the stateless completions request. A picked [model] overrides the
-     * default alias; [provider] is sent alongside it so the switch is honored
-     * even when the instance leaves `direct_model_requests` off (a bare model
-     * is otherwise ignored there — unlike the Hermes-native session/run paths).
-     */
-    private fun chatRequest(
-        history: List<ChatMessageDto>,
-        stream: Boolean,
-        model: String?,
-        provider: String?,
-    ): ChatCompletionRequest =
-        ChatCompletionRequest(
-            model = model?.takeIf { it.isNotBlank() } ?: "hermes-agent",
-            messages = history,
-            stream = stream,
-            provider = provider?.takeIf { it.isNotBlank() },
-        )
 
     fun classify(t: Throwable): ErrorKind = ErrorMapper.classify(t)
 

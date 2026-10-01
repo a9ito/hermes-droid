@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.ui.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.ChatHistory
 import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ConnectionConfig
@@ -34,6 +35,8 @@ data class ChatUiState(
     val modelOptions: ModelOptions? = null,
     /** True while a picker-triggered fresh /api/model/options fetch is in flight. */
     val refreshingModels: Boolean = false,
+    /** Images staged for the next turn (inline multimodal input). */
+    val pendingAttachments: List<ChatAttachment> = emptyList(),
 )
 
 class ChatViewModel(
@@ -99,20 +102,32 @@ class ChatViewModel(
     /** Pick the model for subsequent quick-chat turns (local to this screen). */
     fun selectModel(model: String) = _state.update { it.copy(model = model) }
 
+    /** Stage an image for the next turn (cap enforced, mirrors session chat). */
+    fun addAttachment(attachment: ChatAttachment) = _state.update {
+        if (it.pendingAttachments.size >= ChatAttachment.MAX_PER_TURN) it
+        else it.copy(pendingAttachments = it.pendingAttachments + attachment)
+    }
+
+    fun removeAttachment(index: Int) = _state.update {
+        if (index !in it.pendingAttachments.indices) it
+        else it.copy(pendingAttachments = it.pendingAttachments.filterIndexed { i, _ -> i != index })
+    }
+
     fun onInputChange(value: String) = _state.update { it.copy(input = value) }
     fun consumeError() = _state.update { it.copy(errorKind = null) }
 
     /** Send the current input as a streaming turn. No-op if empty or busy. */
     fun send() {
         val text = _state.value.input.trim()
-        if (text.isEmpty() || _state.value.sending) return
+        val attachments = _state.value.pendingAttachments
+        if ((text.isEmpty() && attachments.isEmpty()) || _state.value.sending) return
         if (!config.isComplete) {
             _state.update { it.copy(errorKind = ErrorKind.NO_CONNECTION) }
             return
         }
 
-        val (newHistory, assistantId) = _state.value.history.startTurn(text)
-        _state.update { it.copy(history = newHistory, input = "", sending = true, errorKind = null) }
+        val (newHistory, assistantId) = _state.value.history.startTurn(text, attachmentCount = attachments.size)
+        _state.update { it.copy(history = newHistory, input = "", pendingAttachments = emptyList(), sending = true, errorKind = null) }
 
         // Build the wire transcript from every non-error turn EXCEPT the empty
         // streaming placeholder we just added.
@@ -129,13 +144,13 @@ class ChatViewModel(
         streamJob = viewModelScope.launch {
             var received = false
             try {
-                repository.streamChat(config, wire, model = model, provider = provider).collect { delta ->
+                repository.streamChat(config, wire, model = model, provider = provider, attachments = attachments).collect { delta ->
                     received = true
                     _state.update { it.copy(history = it.history.appendDelta(assistantId, delta)) }
                 }
                 // Streaming produced nothing? Fall back to one non-streaming call.
                 if (!received) {
-                    when (val res = repository.sendChat(config, wire, model = model, provider = provider)) {
+                    when (val res = repository.sendChat(config, wire, model = model, provider = provider, attachments = attachments)) {
                         is ApiResult.Success ->
                             _state.update { it.copy(history = it.history.setText(assistantId, res.data)) }
                         is ApiResult.Failure ->

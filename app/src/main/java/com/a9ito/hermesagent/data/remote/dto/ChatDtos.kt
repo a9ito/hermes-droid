@@ -4,26 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * OpenAI-compatible Chat Completions request for POST /v1/chat/completions.
- *
- * Contract confirmed against Hermes' own api_server.py + the API Server docs:
- * the endpoint is stateless (full history sent each call) and streaming is
- * opt-in via [stream]. Model defaults to the profile alias "hermes-agent".
- *
- * [provider] is a Hermes extension, not standard OpenAI. The stateless endpoint
- * honors a BARE model only when the instance sets `direct_model_requests: true`;
- * sending an explicit provider alongside the model switches reliably regardless
- * of that flag. It is omitted when null (serialized with explicitNulls=false),
- * and a real OpenAI endpoint ignores the extra field harmlessly.
+ * Response-side DTOs for POST /v1/chat/completions. The REQUEST body is built
+ * dynamically by [ChatCompletionPayload] (not a fixed data class) so a user turn
+ * can carry inline images as an OpenAI multimodal parts array; the endpoint is
+ * stateless (full history sent each call) and streaming is opt-in.
  */
-@Serializable
-data class ChatCompletionRequest(
-    val model: String = "hermes-agent",
-    val messages: List<ChatMessageDto>,
-    val stream: Boolean = false,
-    val provider: String? = null,
-)
-
 @Serializable
 data class ChatMessageDto(
     val role: String,
