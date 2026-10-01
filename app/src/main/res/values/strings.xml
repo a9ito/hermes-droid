@@ -59,6 +59,9 @@
     <string name="sessions_locked_title">Connection required</string>
     <string name="sessions_locked_subtitle">Add your host and API token in Settings to browse sessions.</string>
     <string name="session_chat_title">Session</string>
+    <string name="session_overflow">More options</string>
+    <string name="session_show_compacted">Show compacted turns</string>
+    <string name="session_hide_compacted">Hide compacted turns</string>
     <string name="session_model_pick">Model</string>
     <string name="session_model_title">Model for this session</string>
     <!-- Rich model picker (from /api/model/options) -->

@@ -349,10 +349,24 @@ class HermesRepository(
         }
     }
 
-    suspend fun sessionMessages(config: ConnectionConfig, id: String): ApiResult<List<SessionMessage>> {
+    /**
+     * Load a session's transcript. [includeCompacted] also returns turns a
+     * context compaction archived (default: live transcript only). Images are
+     * always requested as "[image]" placeholders (inline_images=false): the app
+     * renders them as "[image]" regardless, so pulling kilobytes beats pulling
+     * multi-MB data URIs over the network.
+     */
+    suspend fun sessionMessages(
+        config: ConnectionConfig,
+        id: String,
+        includeCompacted: Boolean = false,
+    ): ApiResult<List<SessionMessage>> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
-            ApiResult.Success(apiFor(config).sessionMessages(id).data.toDisplayMessages())
+            ApiResult.Success(
+                apiFor(config).sessionMessages(id, includeCompacted = includeCompacted, inlineImages = false)
+                    .data.toDisplayMessages()
+            )
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
         }

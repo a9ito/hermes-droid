@@ -40,6 +40,8 @@ data class SessionChatUiState(
     val modelOptions: ModelOptions? = null,
     /** True while a picker-triggered fresh /api/model/options fetch is in flight. */
     val refreshingModels: Boolean = false,
+    /** When true, the transcript also includes turns a context compaction archived. */
+    val includeCompacted: Boolean = false,
 )
 
 /**
@@ -73,8 +75,9 @@ class SessionChatViewModel(
     private fun loadHistory() {
         if (!config.isComplete) return
         _state.update { it.copy(loadingHistory = true) }
+        val includeCompacted = _state.value.includeCompacted
         viewModelScope.launch {
-            when (val res = repository.sessionMessages(config, sessionId)) {
+            when (val res = repository.sessionMessages(config, sessionId, includeCompacted = includeCompacted)) {
                 is ApiResult.Success ->
                     _state.update { it.copy(loadingHistory = false, history = res.data.toHistory()) }
                 is ApiResult.Failure ->
@@ -135,6 +138,17 @@ class SessionChatViewModel(
 
     fun onInputChange(value: String) = _state.update { it.copy(input = value) }
     fun consumeError() = _state.update { it.copy(errorKind = null) }
+
+    /**
+     * Toggle whether the transcript includes compaction-archived turns, then
+     * reload. No-op while a turn is streaming (the reload would race the live
+     * assistant message), so the UI disables the control during send.
+     */
+    fun setIncludeCompacted(enabled: Boolean) {
+        if (_state.value.includeCompacted == enabled || _state.value.sending) return
+        _state.update { it.copy(includeCompacted = enabled) }
+        loadHistory()
+    }
 
     /** Stage an image for the next turn (dedup + cap enforced). */
     fun addAttachment(attachment: ChatAttachment) = _state.update {

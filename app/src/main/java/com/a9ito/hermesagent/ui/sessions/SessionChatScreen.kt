@@ -25,7 +25,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -108,6 +111,25 @@ fun SessionChatScreen(
                         TextButton(onClick = { showModelPicker = true }) {
                             Text(stringResource(R.string.session_model_pick))
                         }
+                    }
+                    var showMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.session_overflow))
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(stringResource(
+                                    if (state.includeCompacted) R.string.session_hide_compacted
+                                    else R.string.session_show_compacted
+                                ))
+                            },
+                            enabled = !state.sending,
+                            onClick = {
+                                showMenu = false
+                                viewModel.setIncludeCompacted(!state.includeCompacted)
+                            },
+                        )
                     }
                 },
             )

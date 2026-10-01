@@ -111,6 +111,11 @@ interface HermesApi {
     suspend fun sessionMessages(
         @Path("id") id: String,
         @Query("order") order: String = "oldest",
+        // Also return turns a context compaction archived (default: live transcript only).
+        @Query("include_compacted") includeCompacted: Boolean = false,
+        // Render image attachments as "[image]" placeholders instead of inline data URIs,
+        // so the transcript travels in kilobytes (the app shows "[image]" anyway).
+        @Query("inline_images") inlineImages: Boolean = false,
     ): SessionMessagesResponse
 
     @POST("api/sessions/{id}/fork")
