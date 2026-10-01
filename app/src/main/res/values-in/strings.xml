@@ -61,6 +61,7 @@
     <string name="model_reasoning">reasoning</string>
     <string name="model_fast">fast</string>
     <string name="model_unavailable">tidak tersedia di tier ini</string>
+    <string name="model_checking_tier">Mengecek tier kamu…</string>
 
     <!-- ============================ Layar Alat ============================ -->
     <string name="tools_tab_skills">Skill</string>

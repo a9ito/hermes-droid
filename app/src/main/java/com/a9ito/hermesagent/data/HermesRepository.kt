@@ -203,10 +203,10 @@ class HermesRepository(
      * advertises the model_options capability; callers gate on that and fall
      * back to [fetchModels] otherwise.
      */
-    suspend fun fetchModelOptions(config: ConnectionConfig): ApiResult<ModelOptions> {
+    suspend fun fetchModelOptions(config: ConnectionConfig, refresh: Boolean = false): ApiResult<ModelOptions> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
-            ApiResult.Success(apiFor(config).modelOptions().toDomain())
+            ApiResult.Success(apiFor(config).modelOptions(refresh).toDomain())
         } catch (t: Throwable) {
             ApiResult.Failure(ErrorMapper.classify(t))
         }

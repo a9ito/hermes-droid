@@ -38,6 +38,8 @@ data class SessionChatUiState(
     val availableModels: List<String> = emptyList(),
     /** Rich provider catalog when the instance advertises model_options; null otherwise. */
     val modelOptions: ModelOptions? = null,
+    /** True while a picker-triggered fresh /api/model/options fetch is in flight. */
+    val refreshingModels: Boolean = false,
 )
 
 /**
@@ -109,6 +111,24 @@ class SessionChatViewModel(
             when (val res = repository.lockSessionModel(config, sessionId, model)) {
                 is ApiResult.Success -> _state.update { it.copy(model = model) }
                 is ApiResult.Failure -> _state.update { it.copy(errorKind = res.kind) }
+            }
+        }
+    }
+
+    /**
+     * Re-fetch the model catalog with refresh=true so the server settles
+     * free-tier pricing/entitlement synchronously (a Portal round-trip). The
+     * cheap load at startup can return `pricing_pending`, which locks every
+     * free model; this is what actually unlocks them. Called when the picker
+     * window opens, so the ~15s Portal wait only happens on demand.
+     */
+    fun refreshModelOptions() {
+        if (!config.isComplete || _state.value.refreshingModels) return
+        _state.update { it.copy(refreshingModels = true) }
+        viewModelScope.launch {
+            when (val opts = repository.fetchModelOptions(config, refresh = true)) {
+                is ApiResult.Success -> _state.update { it.copy(modelOptions = opts.data, refreshingModels = false) }
+                is ApiResult.Failure -> _state.update { it.copy(refreshingModels = false) }
             }
         }
     }

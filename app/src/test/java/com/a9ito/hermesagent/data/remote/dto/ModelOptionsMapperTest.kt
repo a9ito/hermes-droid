@@ -64,6 +64,29 @@ class ModelOptionsMapperTest {
         assertTrue(big.unavailable)
     }
 
+    @Test fun pricingPendingParsedAndPropagates() {
+        // Cold-cache free-tier response: server locks every model AND flags pending.
+        val payload = """{"model":"m","provider":"nous","providers":[
+            {"slug":"nous","name":"Nous","authenticated":true,"free_tier":true,
+             "pricing_pending":true,"models":["a","b"],"unavailable_models":["a","b"]}]}"""
+        val opts = parse(payload)
+        assertTrue(opts.providers.single().pricingPending)
+        assertTrue(opts.pending) // ModelOptions surfaces it for the picker's refresh gate
+    }
+
+    @Test fun freeTierPendingAlsoMarksPending() {
+        // The other pending shape (entitlement unknown) collapses to the same flag.
+        val payload = """{"providers":[
+            {"slug":"nous","name":"Nous","authenticated":true,"free_tier_pending":true,"models":["a"]}]}"""
+        assertTrue(parse(payload).providers.single().pricingPending)
+    }
+
+    @Test fun settledCatalogIsNotPending() {
+        // Once pricing resolves, neither flag is set -> not pending.
+        assertFalse(parse(realPayload).pending)
+        assertFalse(parse(realPayload).providers.first { it.slug == "nous" }.pricingPending)
+    }
+
     @Test fun featuredIdsCaptured() {
         val nous = parse(realPayload).providers.first { it.slug == "nous" }
         assertTrue("hermes-4" in nous.featuredModelIds)
