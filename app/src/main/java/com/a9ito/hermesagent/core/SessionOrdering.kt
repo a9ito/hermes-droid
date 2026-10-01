@@ -26,6 +26,22 @@ fun List<SessionSummary>.filteredBy(query: String): List<SessionSummary> {
     }
 }
 
+/**
+ * Keep only sessions whose [SessionSummary.source] equals [source]. A null/blank
+ * source keeps the whole list (the "All" chip). Client-side, over the already
+ * loaded list, like [filteredBy] — distinct from the server's `source` query
+ * param, which this mirrors without an extra round-trip.
+ */
+fun List<SessionSummary>.filteredBySource(source: String?): List<SessionSummary> {
+    val s = source?.trim()
+    if (s.isNullOrEmpty()) return this
+    return filter { it.source == s }
+}
+
+/** Distinct non-blank source labels present in the list, sorted for a stable chip row. */
+fun List<SessionSummary>.distinctSources(): List<String> =
+    mapNotNull { it.source?.takeIf { s -> s.isNotBlank() } }.distinct().sorted()
+
 /** Stable sort by a Comparable key — preserves input order among equal keys. */
 private inline fun <T, K : Comparable<K>> List<T>.sortedByStable(crossinline key: (T) -> K): List<T> =
     withIndex().sortedWith(compareBy({ key(it.value) }, { it.index })).map { it.value }

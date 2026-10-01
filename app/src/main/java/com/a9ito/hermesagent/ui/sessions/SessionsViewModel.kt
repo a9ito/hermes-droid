@@ -7,7 +7,9 @@ import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.SessionSummary
+import com.a9ito.hermesagent.core.distinctSources
 import com.a9ito.hermesagent.core.filteredBy
+import com.a9ito.hermesagent.core.filteredBySource
 import com.a9ito.hermesagent.core.sortedForDisplay
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
@@ -27,6 +29,8 @@ data class SessionsUiState(
     val openSessionId: String? = null,
     /** Live search query for filtering the list (title/model/preview). */
     val query: String = "",
+    /** Selected source filter (null = All). */
+    val sourceFilter: String? = null,
     /** Flat /v1/models id list, fallback when model_options is unavailable. */
     val availableModels: List<String> = emptyList(),
     /** Rich provider catalog when the instance advertises model_options; null otherwise. */
@@ -34,8 +38,12 @@ data class SessionsUiState(
     /** True while a picker-triggered fresh /api/model/options fetch is in flight. */
     val refreshingModels: Boolean = false,
 ) {
-    /** Sessions actually shown: server list filtered by [query] (already sorted). */
-    val visibleSessions: List<SessionSummary> get() = sessions.filteredBy(query)
+    /** Source labels present across the loaded list, for the filter chips. */
+    val sources: List<String> get() = sessions.distinctSources()
+
+    /** Sessions actually shown: server list, source-filtered, then query-filtered (already sorted). */
+    val visibleSessions: List<SessionSummary>
+        get() = sessions.filteredBySource(sourceFilter).filteredBy(query)
 }
 
 /**
@@ -143,6 +151,9 @@ class SessionsViewModel(
 
     /** Update the live search query; filtering is derived, so no network call. */
     fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
+
+    /** Select a source filter (null = All); derived, so no network call. */
+    fun onSourceFilterChange(source: String?) = _state.update { it.copy(sourceFilter = source) }
 
     fun delete(id: String) {
         if (!config.isComplete) return

@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -122,6 +125,7 @@ fun SessionsScreen(
             contentPadding = innerPadding,
             onOpen = viewModel::open,
             onQueryChange = viewModel::onQueryChange,
+            onSourceFilterChange = viewModel::onSourceFilterChange,
             onDelete = viewModel::delete,
             onFork = viewModel::fork,
             onRename = viewModel::rename,
@@ -131,12 +135,14 @@ fun SessionsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SessionsContent(
     state: SessionsUiState,
     contentPadding: PaddingValues,
     onOpen: (String) -> Unit,
     onQueryChange: (String) -> Unit,
+    onSourceFilterChange: (String?) -> Unit,
     onDelete: (String) -> Unit,
     onFork: (String) -> Unit,
     onRename: (String, String) -> Unit,
@@ -168,6 +174,30 @@ private fun SessionsContent(
                 placeholder = { Text(stringResource(R.string.sessions_search_hint)) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
             )
+            // Source filter chips: only when the instance mixes sources (CLI, Discord, api_server,
+            // ...). A single-source instance gets no clutter.
+            if (state.sources.size > 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = state.sourceFilter == null,
+                        onClick = { onSourceFilterChange(null) },
+                        label = { Text(stringResource(R.string.sessions_source_all)) },
+                    )
+                    state.sources.forEach { src ->
+                        FilterChip(
+                            selected = state.sourceFilter == src,
+                            onClick = { onSourceFilterChange(if (state.sourceFilter == src) null else src) },
+                            label = { Text(src) },
+                        )
+                    }
+                }
+            }
         }
         when {
             state.loading && state.sessions.isEmpty() ->
