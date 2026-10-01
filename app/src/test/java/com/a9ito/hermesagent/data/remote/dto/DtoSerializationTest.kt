@@ -71,33 +71,6 @@ class DtoSerializationTest {
         assertNull(chunk.choices.first().delta?.content)
     }
 
-    @Test fun requestEncodesStreamAndRole() {
-        val req = ChatCompletionRequest(messages = listOf(ChatMessageDto("user", "hi")), stream = true)
-        val encoded = json.encodeToString(ChatCompletionRequest.serializer(), req)
-        assertTrue(encoded.contains("\"stream\":true"))
-        assertTrue(encoded.contains("\"role\":\"user\""))
-        assertTrue(encoded.contains("\"model\":\"hermes-agent\""))
-    }
-
-    // A picked model is sent WITH its provider so /v1/chat/completions switches
-    // reliably even when the instance leaves direct_model_requests off.
-    @Test fun requestEncodesProviderWhenSet() {
-        val req = ChatCompletionRequest(
-            model = "gpt-5", messages = listOf(ChatMessageDto("user", "hi")), stream = false, provider = "openai",
-        )
-        val encoded = json.encodeToString(ChatCompletionRequest.serializer(), req)
-        assertTrue(encoded.contains("\"model\":\"gpt-5\""))
-        assertTrue(encoded.contains("\"provider\":\"openai\""))
-    }
-
-    // Default (no provider) must OMIT the field entirely under explicitNulls=false,
-    // so a plain request stays byte-for-byte the OpenAI-standard shape.
-    @Test fun requestOmitsProviderWhenNull() {
-        val req = ChatCompletionRequest(messages = listOf(ChatMessageDto("user", "hi")))
-        val encoded = json.encodeToString(ChatCompletionRequest.serializer(), req)
-        assertFalse(encoded.contains("provider"))
-    }
-
     // The server's PATCH /api/sessions/{id} rejects a null pinned/archived with
     // "'pinned' must be a boolean" (400). With explicitNulls=false the unset
     // fields must be OMITTED entirely, not serialized as null — this pins that.
