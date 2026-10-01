@@ -78,6 +78,21 @@ class JobsViewModel(
         }
     }
 
+    /**
+     * Edit an existing job (PATCH). Only changed fields are sent; a blank
+     * schedule/name is treated as "unchanged" by the repository layer. The list
+     * refreshes on success so the row reflects the server's normalized record.
+     */
+    fun update(id: String, name: String, schedule: String, prompt: String) {
+        if (!config.isComplete || name.isBlank() || schedule.isBlank()) return
+        viewModelScope.launch {
+            when (val res = repository.updateJob(config, id, name = name, schedule = schedule, prompt = prompt)) {
+                is ApiResult.Success -> refresh()
+                is ApiResult.Failure -> _state.update { it.copy(errorKind = res.kind) }
+            }
+        }
+    }
+
     fun pause(id: String) = act(id, JobAction.PAUSE)
     fun resume(id: String) = act(id, JobAction.RESUME)
 

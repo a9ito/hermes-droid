@@ -86,4 +86,27 @@ class JobMapperTest {
         assertEquals(1, jobs.size)
         assertEquals("x", jobs.single().name)
     }
+
+    // PATCH /api/jobs/{id} is a partial update: only the fields actually set are
+    // sent (explicitNulls=false), so an edit of just name+schedule+prompt never
+    // sends enabled=null and can't accidentally pause/resume the job.
+    @Test fun updateRequestOmitsUnsetFields() {
+        val encoded = partialJson
+            .encodeToString(UpdateJobRequest.serializer(), UpdateJobRequest(name = "n", schedule = "every 2h", prompt = "p"))
+        assertTrue(encoded.contains(""""name":"n""""))
+        assertTrue(encoded.contains(""""schedule":"every 2h""""))
+        assertTrue(encoded.contains(""""prompt":"p""""))
+        assertFalse(encoded.contains("enabled"))
+    }
+
+    @Test fun updateRequestEnabledOnlyOmitsText() {
+        val encoded = partialJson
+            .encodeToString(UpdateJobRequest.serializer(), UpdateJobRequest(enabled = false))
+        assertEquals("""{"enabled":false}""", encoded)
+    }
+
+    private companion object {
+        // explicitNulls=false matches the repository's encoder, so unset fields are omitted.
+        val partialJson = Json { explicitNulls = false }
+    }
 }
