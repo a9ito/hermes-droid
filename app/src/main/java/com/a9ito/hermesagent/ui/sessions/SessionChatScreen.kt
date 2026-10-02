@@ -66,6 +66,8 @@ import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ToolActivity
 import com.a9ito.hermesagent.ui.common.ImageAttachmentLoader
 import com.a9ito.hermesagent.ui.common.ModelPickerDialog
+import com.a9ito.hermesagent.ui.common.ReasoningControlDialog
+import com.a9ito.hermesagent.ui.common.reasoningBadge
 import com.a9ito.hermesagent.ui.common.ReasoningPanel
 import com.a9ito.hermesagent.ui.messageRes
 import kotlinx.coroutines.launch
@@ -87,6 +89,7 @@ fun SessionChatScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showModelPicker by rememberSaveable { mutableStateOf(false) }
+    var showReasoning by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -118,6 +121,13 @@ fun SessionChatScreen(
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
+                            text = { Text(stringResource(R.string.reasoning_menu, reasoningBadge(state.reasoning))) },
+                            onClick = {
+                                showMenu = false
+                                showReasoning = true
+                            },
+                        )
+                        DropdownMenuItem(
                             text = {
                                 Text(stringResource(
                                     if (state.includeCompacted) R.string.session_hide_compacted
@@ -147,6 +157,14 @@ fun SessionChatScreen(
                 refreshing = state.refreshingModels,
                 onPick = { showModelPicker = false; viewModel.selectModel(it) },
                 onDismiss = { showModelPicker = false },
+            )
+        }
+        if (showReasoning) {
+            ReasoningControlDialog(
+                pref = state.reasoning,
+                onEffort = viewModel::selectReasoningEffort,
+                onFast = viewModel::setFastMode,
+                onDismiss = { showReasoning = false },
             )
         }
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {

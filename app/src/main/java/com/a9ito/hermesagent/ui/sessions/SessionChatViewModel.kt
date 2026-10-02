@@ -9,6 +9,8 @@ import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.ModelOptions
+import com.a9ito.hermesagent.core.ReasoningEffort
+import com.a9ito.hermesagent.core.ReasoningPref
 import com.a9ito.hermesagent.core.SessionMessage
 import com.a9ito.hermesagent.core.ToolActivity
 import com.a9ito.hermesagent.data.ApiResult
@@ -42,6 +44,8 @@ data class SessionChatUiState(
     val refreshingModels: Boolean = false,
     /** When true, the transcript also includes turns a context compaction archived. */
     val includeCompacted: Boolean = false,
+    /** Per-turn reasoning effort + fast-mode controls. */
+    val reasoning: ReasoningPref = ReasoningPref.DEFAULT,
 )
 
 /**
@@ -139,6 +143,14 @@ class SessionChatViewModel(
     fun onInputChange(value: String) = _state.update { it.copy(input = value) }
     fun consumeError() = _state.update { it.copy(errorKind = null) }
 
+    /** Set the per-turn reasoning effort for subsequent turns in this session. */
+    fun selectReasoningEffort(effort: ReasoningEffort) =
+        _state.update { it.copy(reasoning = it.reasoning.copy(effort = effort)) }
+
+    /** Toggle fast (priority) mode for subsequent turns in this session. */
+    fun setFastMode(enabled: Boolean) =
+        _state.update { it.copy(reasoning = it.reasoning.copy(fast = enabled)) }
+
     /**
      * Toggle whether the transcript includes compaction-archived turns, then
      * reload. No-op while a turn is streaming (the reload would race the live
@@ -176,7 +188,7 @@ class SessionChatViewModel(
 
         streamJob = viewModelScope.launch {
             try {
-                repository.streamSessionChat(config, sessionId, text, attachments).collect { event ->
+                repository.streamSessionChat(config, sessionId, text, attachments, modelOptions = _state.value.reasoning.toModelOptions()).collect { event ->
                     when (event) {
                         is SessionStreamEvent.Delta ->
                             _state.update { it.copy(history = it.history.appendDelta(assistantId, event.text)) }

@@ -62,6 +62,23 @@
     <string name="session_overflow">More options</string>
     <string name="session_show_compacted">Show compacted turns</string>
     <string name="session_hide_compacted">Hide compacted turns</string>
+    <!-- Reasoning / speed controls -->
+    <string name="reasoning_title">Reasoning and speed</string>
+    <string name="reasoning_menu">Reasoning: %1$s</string>
+    <string name="reasoning_effort_label">Thinking effort</string>
+    <string name="reasoning_effort_default">Default</string>
+    <string name="reasoning_effort_off">Off</string>
+    <string name="reasoning_effort_minimal">Minimal</string>
+    <string name="reasoning_effort_low">Low</string>
+    <string name="reasoning_effort_medium">Medium</string>
+    <string name="reasoning_effort_high">High</string>
+    <string name="reasoning_effort_xhigh">Very high</string>
+    <string name="reasoning_effort_max">Max</string>
+    <string name="reasoning_effort_ultra">Ultra</string>
+    <string name="reasoning_fast">Fast mode</string>
+    <string name="reasoning_fast_sub">Request the priority service tier, when the provider offers it.</string>
+    <string name="reasoning_done">Done</string>
+    <string name="reasoning_badge_fast">fast, %1$s</string>
     <string name="session_model_pick">Model</string>
     <string name="session_model_title">Model for this session</string>
     <!-- Rich model picker (from /api/model/options) -->

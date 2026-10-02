@@ -62,6 +62,23 @@
     <string name="session_overflow">Opsi lain</string>
     <string name="session_show_compacted">Tampilkan turn terkompaksi</string>
     <string name="session_hide_compacted">Sembunyikan turn terkompaksi</string>
+    <!-- Reasoning / speed controls -->
+    <string name="reasoning_title">Reasoning dan kecepatan</string>
+    <string name="reasoning_menu">Reasoning: %1$s</string>
+    <string name="reasoning_effort_label">Tingkat berpikir</string>
+    <string name="reasoning_effort_default">Default</string>
+    <string name="reasoning_effort_off">Mati</string>
+    <string name="reasoning_effort_minimal">Minimal</string>
+    <string name="reasoning_effort_low">Rendah</string>
+    <string name="reasoning_effort_medium">Sedang</string>
+    <string name="reasoning_effort_high">Tinggi</string>
+    <string name="reasoning_effort_xhigh">Sangat tinggi</string>
+    <string name="reasoning_effort_max">Maks</string>
+    <string name="reasoning_effort_ultra">Ultra</string>
+    <string name="reasoning_fast">Mode cepat</string>
+    <string name="reasoning_fast_sub">Minta service tier prioritas, kalau provider-nya mendukung.</string>
+    <string name="reasoning_done">Selesai</string>
+    <string name="reasoning_badge_fast">cepat, %1$s</string>
     <string name="session_model_pick">Model</string>
     <string name="session_model_title">Model untuk sesi ini</string>
     <!-- Pemilih model kaya (dari /api/model/options) -->

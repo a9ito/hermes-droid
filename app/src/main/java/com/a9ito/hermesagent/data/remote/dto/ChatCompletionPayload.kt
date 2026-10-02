@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.data.remote.dto
 import com.a9ito.hermesagent.core.ChatAttachment
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -31,6 +32,7 @@ object ChatCompletionPayload {
         stream: Boolean,
         provider: String?,
         attachments: List<ChatAttachment> = emptyList(),
+        modelOptions: JsonObject? = null,
     ): JsonElement = buildJsonObject {
         put("model", model?.takeIf { it.isNotBlank() } ?: DEFAULT_MODEL)
         val images = attachments.filter { it.isImage }
@@ -64,6 +66,8 @@ object ChatCompletionPayload {
         }
         put("stream", stream)
         provider?.takeIf { it.isNotBlank() }?.let { put("provider", it) }
+        // Per-turn reasoning/speed controls; omitted entirely on a default turn.
+        modelOptions?.let { put("model_options", it) }
     }
 
     fun encode(
@@ -73,8 +77,9 @@ object ChatCompletionPayload {
         stream: Boolean,
         provider: String?,
         attachments: List<ChatAttachment> = emptyList(),
+        modelOptions: JsonObject? = null,
     ): String = json.encodeToString(
         JsonElement.serializer(),
-        build(model, messages, stream, provider, attachments),
+        build(model, messages, stream, provider, attachments, modelOptions),
     )
 }
