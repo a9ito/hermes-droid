@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.data.remote.dto
 import com.a9ito.hermesagent.core.ChatAttachment
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -22,7 +23,7 @@ import kotlinx.serialization.json.putJsonObject
  */
 object SessionChatPayload {
 
-    fun build(message: String, attachments: List<ChatAttachment>, model: String?): JsonElement =
+    fun build(message: String, attachments: List<ChatAttachment>, model: String?, modelOptions: JsonObject? = null): JsonElement =
         buildJsonObject {
             if (attachments.isEmpty()) {
                 put("message", message)
@@ -45,8 +46,10 @@ object SessionChatPayload {
                 }
             }
             if (model != null) put("model", model)
+            // Per-turn reasoning/speed controls; omitted entirely on a default turn.
+            modelOptions?.let { put("model_options", it) }
         }
 
-    fun encode(json: Json, message: String, attachments: List<ChatAttachment>, model: String?): String =
-        json.encodeToString(JsonElement.serializer(), build(message, attachments, model))
+    fun encode(json: Json, message: String, attachments: List<ChatAttachment>, model: String?, modelOptions: JsonObject? = null): String =
+        json.encodeToString(JsonElement.serializer(), build(message, attachments, model, modelOptions))
 }

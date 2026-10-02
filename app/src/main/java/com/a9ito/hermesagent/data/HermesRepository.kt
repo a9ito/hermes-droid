@@ -164,11 +164,12 @@ class HermesRepository(
         model: String? = null,
         provider: String? = null,
         attachments: List<ChatAttachment> = emptyList(),
+        modelOptions: JsonObject? = null,
     ): ApiResult<String> {
         if (!config.isComplete) return ApiResult.Failure(ErrorKind.NO_CONNECTION)
         return try {
             val api = apiFor(config)
-            val body = ChatCompletionPayload.build(model, history, stream = false, provider = provider, attachments = attachments)
+            val body = ChatCompletionPayload.build(model, history, stream = false, provider = provider, attachments = attachments, modelOptions = modelOptions)
             val resp = api.chatCompletion(body)
             ApiResult.Success(resp.firstText())
         } catch (t: Throwable) {
@@ -187,10 +188,11 @@ class HermesRepository(
         model: String? = null,
         provider: String? = null,
         attachments: List<ChatAttachment> = emptyList(),
+        modelOptions: JsonObject? = null,
     ): Flow<String> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        val payload = ChatCompletionPayload.encode(json, model, history, stream = true, provider = provider, attachments = attachments)
+        val payload = ChatCompletionPayload.encode(json, model, history, stream = true, provider = provider, attachments = attachments, modelOptions = modelOptions)
         streamer.stream(config.effectiveBaseUrl, payload).collect { emit(it) }
     }
 
@@ -402,10 +404,11 @@ class HermesRepository(
         sessionId: String,
         message: String,
         attachments: List<ChatAttachment> = emptyList(),
+        modelOptions: JsonObject? = null,
     ): Flow<SessionStreamEvent> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        val payload = SessionChatPayload.encode(json, message, attachments, model = null)
+        val payload = SessionChatPayload.encode(json, message, attachments, model = null, modelOptions = modelOptions)
         sessionStreamer.stream(config.effectiveBaseUrl, sessionId, payload).collect { emit(it) }
     }
 

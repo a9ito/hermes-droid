@@ -56,6 +56,8 @@ import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.ui.common.ConnectionGate
 import com.a9ito.hermesagent.ui.common.ImageAttachmentLoader
 import com.a9ito.hermesagent.ui.common.ModelPickerDialog
+import com.a9ito.hermesagent.ui.common.ReasoningControlDialog
+import com.a9ito.hermesagent.ui.common.reasoningBadge
 import com.a9ito.hermesagent.ui.messageRes
 import kotlinx.coroutines.launch
 
@@ -70,6 +72,7 @@ fun ChatScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showModelPicker by rememberSaveable { mutableStateOf(false) }
+    var showReasoning by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -90,6 +93,9 @@ fun ChatScreen(
                             TextButton(onClick = { showModelPicker = true }) {
                                 Text(stringResource(R.string.session_model_pick))
                             }
+                        }
+                        TextButton(onClick = { showReasoning = true }) {
+                            Text(reasoningBadge(state.reasoning))
                         }
                         if (state.history.messages.isNotEmpty()) {
                             IconButton(onClick = viewModel::clearHistory) {
@@ -125,6 +131,15 @@ fun ChatScreen(
                 refreshing = state.refreshingModels,
                 onPick = { showModelPicker = false; viewModel.selectModel(it) },
                 onDismiss = { showModelPicker = false },
+            )
+        }
+
+        if (showReasoning) {
+            ReasoningControlDialog(
+                pref = state.reasoning,
+                onEffort = viewModel::selectReasoningEffort,
+                onFast = viewModel::setFastMode,
+                onDismiss = { showReasoning = false },
             )
         }
 

@@ -9,6 +9,8 @@ import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.ErrorKind
 import com.a9ito.hermesagent.core.ModelOptions
+import com.a9ito.hermesagent.core.ReasoningEffort
+import com.a9ito.hermesagent.core.ReasoningPref
 import com.a9ito.hermesagent.data.ApiResult
 import com.a9ito.hermesagent.data.HermesRepository
 import com.a9ito.hermesagent.data.remote.dto.ChatMessageDto
@@ -37,6 +39,8 @@ data class ChatUiState(
     val refreshingModels: Boolean = false,
     /** Images staged for the next turn (inline multimodal input). */
     val pendingAttachments: List<ChatAttachment> = emptyList(),
+    /** Per-turn reasoning effort + fast-mode controls. */
+    val reasoning: ReasoningPref = ReasoningPref.DEFAULT,
 )
 
 class ChatViewModel(
@@ -102,6 +106,14 @@ class ChatViewModel(
     /** Pick the model for subsequent quick-chat turns (local to this screen). */
     fun selectModel(model: String) = _state.update { it.copy(model = model) }
 
+    /** Set the per-turn reasoning effort (local to this screen). */
+    fun selectReasoningEffort(effort: ReasoningEffort) =
+        _state.update { it.copy(reasoning = it.reasoning.copy(effort = effort)) }
+
+    /** Toggle fast (priority) mode for subsequent turns. */
+    fun setFastMode(enabled: Boolean) =
+        _state.update { it.copy(reasoning = it.reasoning.copy(fast = enabled)) }
+
     /** Stage an image for the next turn (cap enforced, mirrors session chat). */
     fun addAttachment(attachment: ChatAttachment) = _state.update {
         if (it.pendingAttachments.size >= ChatAttachment.MAX_PER_TURN) it
@@ -140,17 +152,18 @@ class ChatViewModel(
         // direct_model_requests, so pairing them makes the switch reliable.
         val model = _state.value.model
         val provider = model?.let { _state.value.modelOptions?.providerForModel(it) }
+        val modelOptions = _state.value.reasoning.toModelOptions()
 
         streamJob = viewModelScope.launch {
             var received = false
             try {
-                repository.streamChat(config, wire, model = model, provider = provider, attachments = attachments).collect { delta ->
+                repository.streamChat(config, wire, model = model, provider = provider, attachments = attachments, modelOptions = modelOptions).collect { delta ->
                     received = true
                     _state.update { it.copy(history = it.history.appendDelta(assistantId, delta)) }
                 }
                 // Streaming produced nothing? Fall back to one non-streaming call.
                 if (!received) {
-                    when (val res = repository.sendChat(config, wire, model = model, provider = provider, attachments = attachments)) {
+                    when (val res = repository.sendChat(config, wire, model = model, provider = provider, attachments = attachments, modelOptions = modelOptions)) {
                         is ApiResult.Success ->
                             _state.update { it.copy(history = it.history.setText(assistantId, res.data)) }
                         is ApiResult.Failure ->
