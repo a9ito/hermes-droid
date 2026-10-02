@@ -176,6 +176,18 @@
     <string name="settings_save">Simpan</string>
     <string name="settings_saved">Pengaturan tersimpan</string>
     <string name="settings_clear">Hapus koneksi tersimpan</string>
+    <!-- Appearance -->
+    <string name="appearance_header">Tampilan</string>
+    <string name="appearance_theme_mode">Tema</string>
+    <string name="appearance_theme_system">Sistem</string>
+    <string name="appearance_theme_light">Terang</string>
+    <string name="appearance_theme_dark">Gelap</string>
+    <string name="appearance_dynamic_color">Warna dinamis</string>
+    <string name="appearance_dynamic_color_sub">Pakai palet wallpaper di Android 12 ke atas. Kalau mati, aksen di bawah yang dipakai.</string>
+    <string name="appearance_pure_black">Hitam pekat (OLED)</string>
+    <string name="appearance_pure_black_sub">Latar hitam di mode gelap buat hemat daya di layar OLED.</string>
+    <string name="appearance_accent">Aksen</string>
+    <string name="appearance_accent_sub">Dipakai saat warna dinamis mati atau tidak tersedia.</string>
     <string name="settings_cleared">Koneksi dihapus</string>
 
     <string name="settings_resolved_endpoint">Endpoint hasil: %1$s</string>

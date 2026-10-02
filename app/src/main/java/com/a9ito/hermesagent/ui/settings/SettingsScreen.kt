@@ -39,6 +39,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
+import com.a9ito.hermesagent.core.AccentPreset
+import com.a9ito.hermesagent.core.AppearancePrefs
+import com.a9ito.hermesagent.core.ThemeMode
+import com.a9ito.hermesagent.ui.theme.AppearanceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,8 +51,12 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(ServiceLocator.settings()),
     ),
+    appearanceViewModel: AppearanceViewModel = viewModel(
+        factory = AppearanceViewModel.Factory(ServiceLocator.appearance()),
+    ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val appearance by appearanceViewModel.prefs.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val savedMessage = stringResource(R.string.settings_saved)
@@ -66,6 +74,7 @@ fun SettingsScreen(
     ) { innerPadding ->
         SettingsContent(
             state = state,
+            appearance = appearance,
             contentPadding = innerPadding,
             onHostChange = viewModel::onHostChange,
             onPortChange = viewModel::onPortChange,
@@ -73,6 +82,10 @@ fun SettingsScreen(
             onToggleToken = viewModel::toggleTokenVisibility,
             onSave = viewModel::save,
             onClear = viewModel::clear,
+            onThemeMode = appearanceViewModel::setThemeMode,
+            onDynamicColor = appearanceViewModel::setDynamicColor,
+            onPureBlack = appearanceViewModel::setPureBlack,
+            onAccent = appearanceViewModel::setAccent,
         )
     }
 }
@@ -81,6 +94,7 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     state: SettingsUiState,
+    appearance: AppearancePrefs,
     contentPadding: PaddingValues,
     onHostChange: (String) -> Unit,
     onPortChange: (String) -> Unit,
@@ -88,6 +102,10 @@ private fun SettingsContent(
     onToggleToken: () -> Unit,
     onSave: () -> Unit,
     onClear: () -> Unit,
+    onThemeMode: (ThemeMode) -> Unit,
+    onDynamicColor: (Boolean) -> Unit,
+    onPureBlack: (Boolean) -> Unit,
+    onAccent: (AccentPreset) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -185,5 +203,13 @@ private fun SettingsContent(
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
+
+        AppearanceSettings(
+            prefs = appearance,
+            onThemeMode = onThemeMode,
+            onDynamicColor = onDynamicColor,
+            onPureBlack = onPureBlack,
+            onAccent = onAccent,
+        )
     }
 }
