@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.a9ito.hermesagent.core.ConnectionConfig
+import com.a9ito.hermesagent.core.ProfileRoute
 import com.a9ito.hermesagent.data.crypto.TokenCrypto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -29,18 +30,22 @@ class SettingsRepository(
     val connectionFlow: Flow<ConnectionConfig> = context.dataStore.data.map { prefs ->
         val baseUrl = prefs[KEY_BASE_URL].orEmpty()
         val token = prefs[KEY_TOKEN_ENC]?.let { crypto.decrypt(it) }.orEmpty()
-        ConnectionConfig(baseUrl = baseUrl, token = token)
+        val profile = ProfileRoute.normalize(prefs[KEY_PROFILE]) ?: ProfileRoute.DEFAULT
+        ConnectionConfig(baseUrl = baseUrl, token = token, profile = profile)
     }
 
     /**
-     * Persist a normalized [baseUrl] + raw [token]. The token is encrypted
-     * before it touches disk.
+     * Persist a normalized [baseUrl] + raw [token] + multiplex [profile]. The
+     * token is encrypted before it touches disk; the profile is normalized
+     * (blank/invalid -> default) so a bad value never reaches routing.
      */
-    suspend fun save(baseUrl: String, token: String) {
+    suspend fun save(baseUrl: String, token: String, profile: String = ProfileRoute.DEFAULT) {
         val encryptedToken = crypto.encrypt(token)
+        val normalizedProfile = ProfileRoute.normalize(profile) ?: ProfileRoute.DEFAULT
         context.dataStore.edit { prefs ->
             prefs[KEY_BASE_URL] = baseUrl
             prefs[KEY_TOKEN_ENC] = encryptedToken
+            prefs[KEY_PROFILE] = normalizedProfile
         }
     }
 
@@ -49,11 +54,13 @@ class SettingsRepository(
         context.dataStore.edit { prefs ->
             prefs.remove(KEY_BASE_URL)
             prefs.remove(KEY_TOKEN_ENC)
+            prefs.remove(KEY_PROFILE)
         }
     }
 
     private companion object {
         val KEY_BASE_URL = stringPreferencesKey("base_url")
         val KEY_TOKEN_ENC = stringPreferencesKey("token_enc")
+        val KEY_PROFILE = stringPreferencesKey("profile")
     }
 }

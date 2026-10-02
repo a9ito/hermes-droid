@@ -176,6 +176,35 @@
     <string name="settings_save">Save</string>
     <string name="settings_saved">Settings saved</string>
     <string name="settings_clear">Clear saved connection</string>
+    <string name="settings_profile_label">Profile (optional)</string>
+    <string name="settings_profile_placeholder">default</string>
+    <string name="settings_profile_supporting">Leave blank for the default profile. Enter a name to route through a multiplex profile at /p/&lt;name&gt;/.</string>
+    <string name="settings_error_profile_invalid">Use only letters, numbers, dot, dash, or underscore.</string>
+    <!-- Appearance -->
+    <string name="appearance_header">Appearance</string>
+    <string name="appearance_theme_mode">Theme</string>
+    <string name="appearance_theme_system">System</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_dynamic_color">Dynamic color</string>
+    <string name="appearance_dynamic_color_sub">Use the wallpaper palette on Android 12 and above. When off, the accent below is used.</string>
+    <string name="appearance_pure_black">Pure black (OLED)</string>
+    <string name="appearance_pure_black_sub">Black backgrounds in dark mode to save power on OLED screens.</string>
+    <string name="appearance_accent">Accent</string>
+    <string name="appearance_accent_sub">Applied when dynamic color is off or unavailable.</string>
+    <string name="appearance_font">Font</string>
+    <string name="appearance_font_system">System</string>
+    <string name="appearance_font_serif">Serif</string>
+    <string name="appearance_font_mono">Monospace</string>
+    <string name="appearance_ui_scale">Display size</string>
+    <string name="appearance_scale_compact">Compact</string>
+    <string name="appearance_scale_default">Default</string>
+    <string name="appearance_scale_comfortable">Comfortable</string>
+    <string name="appearance_scale_large">Large</string>
+    <string name="appearance_corners">Corners</string>
+    <string name="appearance_corners_sharp">Sharp</string>
+    <string name="appearance_corners_rounded">Rounded</string>
+    <string name="appearance_corners_extra">Extra round</string>
     <string name="settings_cleared">Connection cleared</string>
 
     <string name="settings_resolved_endpoint">Resolved endpoint: %1$s</string>

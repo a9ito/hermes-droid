@@ -19,6 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -40,8 +42,10 @@ import com.a9ito.hermesagent.ui.sessions.SessionChatScreen
 import com.a9ito.hermesagent.ui.sessions.SessionsScreen
 import com.a9ito.hermesagent.ui.settings.SettingsScreen
 import com.a9ito.hermesagent.ui.status.StatusScreen
+import com.a9ito.hermesagent.ui.theme.AppearanceViewModel
 import com.a9ito.hermesagent.ui.theme.HermesAgentTheme
 import com.a9ito.hermesagent.ui.tools.ToolsScreen
+import com.a9ito.hermesagent.ServiceLocator
 
 /**
  * Root composable: applies the M3 Expressive theme, then hosts the top-level
@@ -63,7 +67,11 @@ import com.a9ito.hermesagent.ui.tools.ToolsScreen
  */
 @Composable
 fun HermesAgentApp() {
-    HermesAgentTheme {
+    val appearanceViewModel: AppearanceViewModel = viewModel(
+        factory = AppearanceViewModel.Factory(ServiceLocator.appearance()),
+    )
+    val appearance by appearanceViewModel.prefs.collectAsStateWithLifecycle()
+    HermesAgentTheme(prefs = appearance) {
         val navController = rememberNavController()
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = backStackEntry?.destination

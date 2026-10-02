@@ -9,14 +9,20 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import com.a9ito.hermesagent.core.AccentPreset
+import com.a9ito.hermesagent.core.AppearancePrefs
 
 /**
  * Hand-picked static fallback schemes, used on devices below Android 12 (where
  * dynamic color is unavailable) — a real branded plum palette, never the
  * placeholder baseline grey/purple.
  */
-private val LightColors: ColorScheme = lightColorScheme(
+internal val LightColors: ColorScheme = lightColorScheme(
     primary = md_primary_light,
     onPrimary = md_onPrimary_light,
     primaryContainer = md_primaryContainer_light,
@@ -47,7 +53,7 @@ private val LightColors: ColorScheme = lightColorScheme(
     surfaceTint = md_surfaceTint_light,
 )
 
-private val DarkColors: ColorScheme = darkColorScheme(
+internal val DarkColors: ColorScheme = darkColorScheme(
     primary = md_primary_dark,
     onPrimary = md_onPrimary_dark,
     primaryContainer = md_primaryContainer_dark,
@@ -79,44 +85,69 @@ private val DarkColors: ColorScheme = darkColorScheme(
 )
 
 /**
- * App theme built on Material 3, styled for the Expressive look.
+ * Blacken the dark background + surface roles for OLED ("pure black" toggle).
+ * Only the dark scheme should be passed here; applies true black to the base
+ * surfaces while leaving container tones intact so elevation is still readable.
+ */
+private fun ColorScheme.toPureBlack(): ColorScheme = copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceContainerLowest = Color.Black,
+)
+
+/**
+ * App theme built on Material 3, styled for the Expressive look, driven by the
+ * user's [AppearancePrefs].
  *
- * - Dynamic color via [dynamicLightColorScheme] / [dynamicDarkColorScheme] on
- *   Android 12+ (API 31), falling back to the hand-picked plum palette above.
- * - Motion is spring-based, not linear/ease: the public [MaterialTheme] installs
- *   material3's standard [androidx.compose.material3.MotionScheme], whose specs
- *   are all `spring(...)` (damping/stiffness tokens) — components animate with
- *   springs out of the box.
+ * - [AppearancePrefs.themeMode] forces light/dark or follows the system.
+ * - [AppearancePrefs.dynamicColor] uses Android 12+ wallpaper-based dynamic
+ *   color when on and available; otherwise the chosen [AppearancePrefs.accent]
+ *   curated palette (dependency-free, hand-picked — not a generated seed).
+ * - [AppearancePrefs.pureBlack] blacks out dark surfaces for OLED (dark only).
+ * - Motion is spring-based: the public [MaterialTheme] installs material3's
+ *   standard [androidx.compose.material3.MotionScheme], whose specs are all
+ *   `spring(...)`, so components animate with springs out of the box.
  * - Expressive shape and type tokens come from [AppShapes] and [AppTypography].
  *
  * Note on the fully-public Expressive API: `MaterialExpressiveTheme` and
  * `MotionScheme.expressive()` are still library-`internal` in material3 1.4.0
- * (the current stable). Their public form ships in material3 1.5.0+, which
- * requires compileSdk 37 (Android 17, not yet stable). To stay on stable
- * (material3 1.4.0, compileSdk 36) we drive Expressive through the public
- * [MaterialTheme] surface above; swap in `MaterialExpressiveTheme` once 1.5.0 is
- * stable and API 37 is available.
+ * (the current stable); their public form ships in material3 1.5.0+ (compileSdk
+ * 37, not yet stable). We drive Expressive through the public [MaterialTheme]
+ * surface; swap in `MaterialExpressiveTheme` once 1.5.0 is stable.
  */
 @Composable
 fun HermesAgentTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    prefs: AppearancePrefs = AppearancePrefs.DEFAULT,
     content: @Composable () -> Unit,
 ) {
-    val useDynamic = dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val colorScheme: ColorScheme = when {
+    val systemDark = isSystemInDarkTheme()
+    val darkTheme = prefs.resolveDark(systemDark)
+    val useDynamic = prefs.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    var colorScheme: ColorScheme = when {
         useDynamic -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColors
-        else -> LightColors
+        darkTheme -> accentDarkScheme(prefs.accent)
+        else -> accentLightScheme(prefs.accent)
     }
+    if (darkTheme && prefs.pureBlack) colorScheme = colorScheme.toPureBlack()
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        shapes = AppShapes,
-        typography = AppTypography,
-        content = content,
+    // UI scale multiplies the current density so dp sizes and sp text rescale
+    // together, on top of (not replacing) the user's OS font-scale setting.
+    val baseDensity = LocalDensity.current
+    val scaledDensity = Density(
+        density = baseDensity.density * prefs.uiScale.scale,
+        fontScale = baseDensity.fontScale,
     )
+
+    CompositionLocalProvider(LocalDensity provides scaledDensity) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = shapesFor(prefs.cornerStyle),
+            typography = typographyFor(prefs.font),
+            content = content,
+        )
+    }
 }

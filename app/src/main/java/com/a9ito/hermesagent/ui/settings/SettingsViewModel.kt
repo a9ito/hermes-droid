@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.a9ito.hermesagent.core.ProfileRoute
 import com.a9ito.hermesagent.core.UrlNormalizer
 import com.a9ito.hermesagent.data.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,12 +13,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Which field, if any, failed validation — screen maps this to a string res. */
-enum class SettingsField { HOST, PORT, TOKEN }
+enum class SettingsField { HOST, PORT, TOKEN, PROFILE }
 
 data class SettingsUiState(
     val host: String = "",
     val port: String = "",
     val token: String = "",
+    val profile: String = "",
     val tokenVisible: Boolean = false,
     val resolvedEndpoint: String? = null,
     val invalidField: SettingsField? = null,
@@ -45,6 +47,7 @@ class SettingsViewModel(
                             host = host,
                             port = port,
                             token = config.token,
+                            profile = if (config.profile == ProfileRoute.DEFAULT) "" else config.profile,
                             resolvedEndpoint = config.baseUrl.ifBlank { null },
                             loaded = true,
                         )
@@ -57,6 +60,7 @@ class SettingsViewModel(
     fun onHostChange(value: String) = _state.update { it.copy(host = value, invalidField = null, saved = false) }
     fun onPortChange(value: String) = _state.update { it.copy(port = value.filter(Char::isDigit), invalidField = null, saved = false) }
     fun onTokenChange(value: String) = _state.update { it.copy(token = value, invalidField = null, saved = false) }
+    fun onProfileChange(value: String) = _state.update { it.copy(profile = value, invalidField = null, saved = false) }
     fun toggleTokenVisibility() = _state.update { it.copy(tokenVisible = !it.tokenVisible) }
     fun consumeEvents() = _state.update { it.copy(saved = false, cleared = false) }
 
@@ -67,10 +71,16 @@ class SettingsViewModel(
             _state.update { it.copy(invalidField = SettingsField.TOKEN) }
             return
         }
+        // A non-blank profile must be a valid profile-dir name; blank is fine (= default).
+        val normalizedProfile = ProfileRoute.normalize(s.profile)
+        if (normalizedProfile == null) {
+            _state.update { it.copy(invalidField = SettingsField.PROFILE) }
+            return
+        }
         when (val result = UrlNormalizer.normalize(s.host, s.port)) {
             is UrlNormalizer.Result.Ok -> {
                 viewModelScope.launch {
-                    settings.save(baseUrl = result.baseUrl, token = s.token)
+                    settings.save(baseUrl = result.baseUrl, token = s.token, profile = normalizedProfile)
                     _state.update {
                         it.copy(resolvedEndpoint = result.baseUrl, saved = true, invalidField = null)
                     }

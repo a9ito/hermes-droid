@@ -39,6 +39,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
+import com.a9ito.hermesagent.core.AccentPreset
+import com.a9ito.hermesagent.core.AppearancePrefs
+import com.a9ito.hermesagent.core.CornerStyle
+import com.a9ito.hermesagent.core.FontChoice
+import com.a9ito.hermesagent.core.ThemeMode
+import com.a9ito.hermesagent.core.UiScale
+import com.a9ito.hermesagent.ui.theme.AppearanceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,8 +54,12 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(ServiceLocator.settings()),
     ),
+    appearanceViewModel: AppearanceViewModel = viewModel(
+        factory = AppearanceViewModel.Factory(ServiceLocator.appearance()),
+    ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val appearance by appearanceViewModel.prefs.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val savedMessage = stringResource(R.string.settings_saved)
@@ -66,13 +77,22 @@ fun SettingsScreen(
     ) { innerPadding ->
         SettingsContent(
             state = state,
+            appearance = appearance,
             contentPadding = innerPadding,
             onHostChange = viewModel::onHostChange,
             onPortChange = viewModel::onPortChange,
             onTokenChange = viewModel::onTokenChange,
+            onProfileChange = viewModel::onProfileChange,
             onToggleToken = viewModel::toggleTokenVisibility,
             onSave = viewModel::save,
             onClear = viewModel::clear,
+            onThemeMode = appearanceViewModel::setThemeMode,
+            onDynamicColor = appearanceViewModel::setDynamicColor,
+            onPureBlack = appearanceViewModel::setPureBlack,
+            onAccent = appearanceViewModel::setAccent,
+            onFont = appearanceViewModel::setFont,
+            onUiScale = appearanceViewModel::setUiScale,
+            onCornerStyle = appearanceViewModel::setCornerStyle,
         )
     }
 }
@@ -81,13 +101,22 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     state: SettingsUiState,
+    appearance: AppearancePrefs,
     contentPadding: PaddingValues,
     onHostChange: (String) -> Unit,
     onPortChange: (String) -> Unit,
     onTokenChange: (String) -> Unit,
+    onProfileChange: (String) -> Unit,
     onToggleToken: () -> Unit,
     onSave: () -> Unit,
     onClear: () -> Unit,
+    onThemeMode: (ThemeMode) -> Unit,
+    onDynamicColor: (Boolean) -> Unit,
+    onPureBlack: (Boolean) -> Unit,
+    onAccent: (AccentPreset) -> Unit,
+    onFont: (FontChoice) -> Unit,
+    onUiScale: (UiScale) -> Unit,
+    onCornerStyle: (CornerStyle) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -170,6 +199,23 @@ private fun SettingsContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
 
+        val profileError = state.invalidField == SettingsField.PROFILE
+        OutlinedTextField(
+            value = state.profile,
+            onValueChange = onProfileChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.settings_profile_label)) },
+            placeholder = { Text(stringResource(R.string.settings_profile_placeholder)) },
+            singleLine = true,
+            isError = profileError,
+            supportingText = {
+                Text(
+                    if (profileError) stringResource(R.string.settings_error_profile_invalid)
+                    else stringResource(R.string.settings_profile_supporting),
+                )
+            },
+        )
+
         state.resolvedEndpoint?.let { endpoint ->
             Text(stringResource(R.string.settings_resolved_endpoint, endpoint))
         }
@@ -185,5 +231,16 @@ private fun SettingsContent(
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
+
+        AppearanceSettings(
+            prefs = appearance,
+            onThemeMode = onThemeMode,
+            onDynamicColor = onDynamicColor,
+            onPureBlack = onPureBlack,
+            onAccent = onAccent,
+            onFont = onFont,
+            onUiScale = onUiScale,
+            onCornerStyle = onCornerStyle,
+        )
     }
 }
