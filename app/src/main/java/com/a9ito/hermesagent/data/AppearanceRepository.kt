@@ -9,7 +9,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.a9ito.hermesagent.core.AccentPreset
 import com.a9ito.hermesagent.core.AppearancePrefs
+import com.a9ito.hermesagent.core.CornerStyle
+import com.a9ito.hermesagent.core.FontChoice
 import com.a9ito.hermesagent.core.ThemeMode
+import com.a9ito.hermesagent.core.UiScale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -32,6 +35,9 @@ class AppearanceRepository(private val context: Context) {
             dynamicColor = prefs[KEY_DYNAMIC_COLOR] ?: true,
             pureBlack = prefs[KEY_PURE_BLACK] ?: false,
             accent = AccentPreset.fromKey(prefs[KEY_ACCENT]),
+            font = FontChoice.fromKey(prefs[KEY_FONT]),
+            uiScale = UiScale.fromKey(prefs[KEY_UI_SCALE]),
+            cornerStyle = CornerStyle.fromKey(prefs[KEY_CORNER]),
         )
     }
 
@@ -47,10 +53,22 @@ class AppearanceRepository(private val context: Context) {
     suspend fun setAccent(accent: AccentPreset) =
         context.appearanceDataStore.edit { it[KEY_ACCENT] = accent.key }.let {}
 
+    suspend fun setFont(font: FontChoice) =
+        context.appearanceDataStore.edit { it[KEY_FONT] = font.key }.let {}
+
+    suspend fun setUiScale(scale: UiScale) =
+        context.appearanceDataStore.edit { it[KEY_UI_SCALE] = scale.key }.let {}
+
+    suspend fun setCornerStyle(style: CornerStyle) =
+        context.appearanceDataStore.edit { it[KEY_CORNER] = style.key }.let {}
+
     private companion object {
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val KEY_PURE_BLACK = booleanPreferencesKey("pure_black")
         val KEY_ACCENT = stringPreferencesKey("accent")
+        val KEY_FONT = stringPreferencesKey("font")
+        val KEY_UI_SCALE = stringPreferencesKey("ui_scale")
+        val KEY_CORNER = stringPreferencesKey("corner_style")
     }
 }

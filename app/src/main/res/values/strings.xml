@@ -188,6 +188,19 @@
     <string name="appearance_pure_black_sub">Black backgrounds in dark mode to save power on OLED screens.</string>
     <string name="appearance_accent">Accent</string>
     <string name="appearance_accent_sub">Applied when dynamic color is off or unavailable.</string>
+    <string name="appearance_font">Font</string>
+    <string name="appearance_font_system">System</string>
+    <string name="appearance_font_serif">Serif</string>
+    <string name="appearance_font_mono">Monospace</string>
+    <string name="appearance_ui_scale">Display size</string>
+    <string name="appearance_scale_compact">Compact</string>
+    <string name="appearance_scale_default">Default</string>
+    <string name="appearance_scale_comfortable">Comfortable</string>
+    <string name="appearance_scale_large">Large</string>
+    <string name="appearance_corners">Corners</string>
+    <string name="appearance_corners_sharp">Sharp</string>
+    <string name="appearance_corners_rounded">Rounded</string>
+    <string name="appearance_corners_extra">Extra round</string>
     <string name="settings_cleared">Connection cleared</string>
 
     <string name="settings_resolved_endpoint">Resolved endpoint: %1$s</string>

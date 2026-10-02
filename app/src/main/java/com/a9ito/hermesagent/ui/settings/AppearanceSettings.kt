@@ -31,7 +31,10 @@ import androidx.compose.ui.unit.dp
 import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.core.AccentPreset
 import com.a9ito.hermesagent.core.AppearancePrefs
+import com.a9ito.hermesagent.core.CornerStyle
+import com.a9ito.hermesagent.core.FontChoice
 import com.a9ito.hermesagent.core.ThemeMode
+import com.a9ito.hermesagent.core.UiScale
 import com.a9ito.hermesagent.ui.theme.accentDarkScheme
 import com.a9ito.hermesagent.ui.theme.accentLightScheme
 
@@ -51,6 +54,9 @@ fun AppearanceSettings(
     onDynamicColor: (Boolean) -> Unit,
     onPureBlack: (Boolean) -> Unit,
     onAccent: (AccentPreset) -> Unit,
+    onFont: (FontChoice) -> Unit,
+    onUiScale: (UiScale) -> Unit,
+    onCornerStyle: (CornerStyle) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
@@ -105,8 +111,65 @@ fun AppearanceSettings(
                     )
                 }
             }
+
+            // --- Font ---
+            Text(stringResource(R.string.appearance_font))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = prefs.font == FontChoice.SYSTEM,
+                    onClick = { onFont(FontChoice.SYSTEM) },
+                    label = { Text(stringResource(R.string.appearance_font_system)) },
+                )
+                FilterChip(
+                    selected = prefs.font == FontChoice.SERIF,
+                    onClick = { onFont(FontChoice.SERIF) },
+                    label = { Text(stringResource(R.string.appearance_font_serif)) },
+                )
+                FilterChip(
+                    selected = prefs.font == FontChoice.MONOSPACE,
+                    onClick = { onFont(FontChoice.MONOSPACE) },
+                    label = { Text(stringResource(R.string.appearance_font_mono)) },
+                )
+            }
+
+            // --- UI scale ---
+            Text(stringResource(R.string.appearance_ui_scale))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                UiScale.entries.forEach { scale ->
+                    FilterChip(
+                        selected = prefs.uiScale == scale,
+                        onClick = { onUiScale(scale) },
+                        label = { Text(stringResource(uiScaleLabel(scale))) },
+                    )
+                }
+            }
+
+            // --- Corner style ---
+            Text(stringResource(R.string.appearance_corners))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CornerStyle.entries.forEach { style ->
+                    FilterChip(
+                        selected = prefs.cornerStyle == style,
+                        onClick = { onCornerStyle(style) },
+                        label = { Text(stringResource(cornerLabel(style))) },
+                    )
+                }
+            }
         }
     }
+}
+
+private fun uiScaleLabel(scale: UiScale): Int = when (scale) {
+    UiScale.COMPACT -> R.string.appearance_scale_compact
+    UiScale.DEFAULT -> R.string.appearance_scale_default
+    UiScale.COMFORTABLE -> R.string.appearance_scale_comfortable
+    UiScale.LARGE -> R.string.appearance_scale_large
+}
+
+private fun cornerLabel(style: CornerStyle): Int = when (style) {
+    CornerStyle.SHARP -> R.string.appearance_corners_sharp
+    CornerStyle.ROUNDED -> R.string.appearance_corners_rounded
+    CornerStyle.EXTRA -> R.string.appearance_corners_extra
 }
 
 @Composable

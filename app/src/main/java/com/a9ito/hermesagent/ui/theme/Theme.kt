@@ -9,8 +9,11 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import com.a9ito.hermesagent.core.AccentPreset
 import com.a9ito.hermesagent.core.AppearancePrefs
 
@@ -131,10 +134,20 @@ fun HermesAgentTheme(
     }
     if (darkTheme && prefs.pureBlack) colorScheme = colorScheme.toPureBlack()
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        shapes = AppShapes,
-        typography = AppTypography,
-        content = content,
+    // UI scale multiplies the current density so dp sizes and sp text rescale
+    // together, on top of (not replacing) the user's OS font-scale setting.
+    val baseDensity = LocalDensity.current
+    val scaledDensity = Density(
+        density = baseDensity.density * prefs.uiScale.scale,
+        fontScale = baseDensity.fontScale,
     )
+
+    CompositionLocalProvider(LocalDensity provides scaledDensity) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = shapesFor(prefs.cornerStyle),
+            typography = typographyFor(prefs.font),
+            content = content,
+        )
+    }
 }

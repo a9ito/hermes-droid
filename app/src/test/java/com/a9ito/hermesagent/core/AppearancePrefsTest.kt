@@ -59,11 +59,36 @@ class AppearancePrefsTest {
         assertEquals(AccentPreset.DEFAULT, AccentPreset.fromKey("bogus"))
     }
 
+    @Test fun fontFromKeyRoundTripsAndFallsBackToDefault() {
+        FontChoice.entries.forEach { assertEquals(it, FontChoice.fromKey(it.key)) }
+        assertEquals(FontChoice.DEFAULT, FontChoice.fromKey(null))
+        assertEquals(FontChoice.DEFAULT, FontChoice.fromKey("bogus"))
+    }
+
+    @Test fun uiScaleFromKeyRoundTripsAndFallsBackToDefault() {
+        UiScale.entries.forEach { assertEquals(it, UiScale.fromKey(it.key)) }
+        assertEquals(UiScale.DEFAULT_SCALE, UiScale.fromKey(null))
+        assertEquals(UiScale.DEFAULT_SCALE, UiScale.fromKey("bogus"))
+    }
+
+    @Test fun uiScaleDefaultIsUnityMultiplier() {
+        assertEquals(1.0f, UiScale.DEFAULT.scale)
+    }
+
+    @Test fun cornerStyleFromKeyRoundTripsAndFallsBackToDefault() {
+        CornerStyle.entries.forEach { assertEquals(it, CornerStyle.fromKey(it.key)) }
+        assertEquals(CornerStyle.DEFAULT, CornerStyle.fromKey(null))
+        assertEquals(CornerStyle.DEFAULT, CornerStyle.fromKey("bogus"))
+    }
+
     @Test fun defaultsReproduceOriginalLook() {
         val d = AppearancePrefs.DEFAULT
         assertEquals(ThemeMode.SYSTEM, d.themeMode)
         assertTrue(d.dynamicColor)
         assertFalse(d.pureBlack)
         assertEquals(AccentPreset.PLUM, d.accent)
+        assertEquals(FontChoice.SYSTEM, d.font)
+        assertEquals(UiScale.DEFAULT, d.uiScale)
+        assertEquals(CornerStyle.ROUNDED, d.cornerStyle)
     }
 }

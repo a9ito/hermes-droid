@@ -41,7 +41,10 @@ import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.AccentPreset
 import com.a9ito.hermesagent.core.AppearancePrefs
+import com.a9ito.hermesagent.core.CornerStyle
+import com.a9ito.hermesagent.core.FontChoice
 import com.a9ito.hermesagent.core.ThemeMode
+import com.a9ito.hermesagent.core.UiScale
 import com.a9ito.hermesagent.ui.theme.AppearanceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,6 +89,9 @@ fun SettingsScreen(
             onDynamicColor = appearanceViewModel::setDynamicColor,
             onPureBlack = appearanceViewModel::setPureBlack,
             onAccent = appearanceViewModel::setAccent,
+            onFont = appearanceViewModel::setFont,
+            onUiScale = appearanceViewModel::setUiScale,
+            onCornerStyle = appearanceViewModel::setCornerStyle,
         )
     }
 }
@@ -106,6 +112,9 @@ private fun SettingsContent(
     onDynamicColor: (Boolean) -> Unit,
     onPureBlack: (Boolean) -> Unit,
     onAccent: (AccentPreset) -> Unit,
+    onFont: (FontChoice) -> Unit,
+    onUiScale: (UiScale) -> Unit,
+    onCornerStyle: (CornerStyle) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -210,6 +219,9 @@ private fun SettingsContent(
             onDynamicColor = onDynamicColor,
             onPureBlack = onPureBlack,
             onAccent = onAccent,
+            onFont = onFont,
+            onUiScale = onUiScale,
+            onCornerStyle = onCornerStyle,
         )
     }
 }

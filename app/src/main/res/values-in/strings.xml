@@ -188,6 +188,19 @@
     <string name="appearance_pure_black_sub">Latar hitam di mode gelap buat hemat daya di layar OLED.</string>
     <string name="appearance_accent">Aksen</string>
     <string name="appearance_accent_sub">Dipakai saat warna dinamis mati atau tidak tersedia.</string>
+    <string name="appearance_font">Font</string>
+    <string name="appearance_font_system">Sistem</string>
+    <string name="appearance_font_serif">Serif</string>
+    <string name="appearance_font_mono">Monospace</string>
+    <string name="appearance_ui_scale">Ukuran tampilan</string>
+    <string name="appearance_scale_compact">Rapat</string>
+    <string name="appearance_scale_default">Standar</string>
+    <string name="appearance_scale_comfortable">Lega</string>
+    <string name="appearance_scale_large">Besar</string>
+    <string name="appearance_corners">Sudut</string>
+    <string name="appearance_corners_sharp">Tajam</string>
+    <string name="appearance_corners_rounded">Membulat</string>
+    <string name="appearance_corners_extra">Sangat bulat</string>
     <string name="settings_cleared">Koneksi dihapus</string>
 
     <string name="settings_resolved_endpoint">Endpoint hasil: %1$s</string>
