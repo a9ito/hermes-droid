@@ -15,30 +15,37 @@ Built with Kotlin + Jetpack Compose and a Material 3 **Expressive** UI.
 ## Features
 
 - **Chat** — a quick, stateless conversation over the OpenAI-compatible
-  `/v1/chat/completions` endpoint, with streaming (SSE) replies. Good for
-  one-off questions; history lives only on the phone for the current screen.
-- **Sessions** — the persistent side. List, open, create, rename, fork,
-  **pin**, **archive** and delete the real server-side sessions your instance
-  keeps (`/api/sessions`). Opening one loads its stored transcript and streams
+  `/v1/chat/completions` endpoint, with streaming (SSE) replies and optional
+  **image attachments**. Good for one-off questions; history lives only on the
+  phone for the current screen.
+- **Sessions** — the persistent side. List, open, create (with a chosen model
+  and system prompt), rename, fork, **pin**, **archive** and delete the real
+  server-side sessions your instance keeps (`/api/sessions`). The list has live
+  text **search** and a **source filter** (CLI, Discord, api_server, ...), and
+  shows forked sessions. Opening one loads its stored transcript and streams
   each new turn through `/api/sessions/{id}/chat/stream`, so the conversation is
   durable and shared with every other Hermes surface (CLI, Discord, desktop).
   Each turn shows the agent's **live activity** as it works (reasoning, tool
-  calls with status, mid-turn commentary), and completed turns keep a
-  **collapsible reasoning** trace. Pinned sessions float to the top; each
-  session can be locked to a specific model from the picker in its app bar.
+  calls with status, mid-turn commentary), completed turns keep a
+  **collapsible reasoning** trace, and the transcript can **reveal
+  compaction-archived turns**. Pinned sessions float to the top; each session
+  can be locked to a specific model from the picker in its app bar.
 - **Runs** — submit durable background runs and watch their live SSE event
   stream, with server-side tool-call approvals, steering and stop
   (`/v1/runs`). The tab for driving longer agent work rather than a chat.
 - **Tools** — a read-only viewer for the instance's installed **skills**
   (`/v1/skills`) and configurable **toolsets** (`/v1/toolsets`), including each
   toolset's enabled/configured state and the concrete tools it expands to.
-- **Jobs** — view and manage the instance's scheduled/cron jobs: create, pause,
-  resume, run-now and delete (`/v1/jobs`).
+- **Jobs** — view and manage the instance's scheduled/cron jobs: create,
+  **edit**, pause, resume, run-now and delete (`/api/jobs`).
 - **Status** — the instance's readiness, gateway state, active agents,
   connected platforms, and model, from `/health/detailed` + `/v1/models`.
 - **Settings** — point the app at your Hermes Agent API server (host/URL, port,
-  token). The token is encrypted with an AndroidKeyStore-backed AES/GCM key and
-  is never logged or stored in plaintext.
+  token), optionally selecting a **multiplex profile** (routes through
+  `/p/<profile>/`). The token is encrypted with an AndroidKeyStore-backed
+  AES/GCM key and is never logged or stored in plaintext. An **Appearance**
+  section customizes theme mode, dynamic color, pure-black (OLED), accent
+  palette, font, display size, and corner style.
 
 Feature tabs beyond Settings are gated behind a saved host + token, and each
 gates itself on the instance's reported **capabilities** so a surface the

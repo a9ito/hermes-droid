@@ -33,7 +33,6 @@
     <string name="sessions_new_model_label">Model</string>
     <string name="sessions_new_model_default">Default instance</string>
     <string name="sessions_new_create">Buat</string>
-    <string name="sessions_new_advanced">Opsi</string>
     <string name="sessions_empty_title">Belum ada sesi</string>
     <string name="sessions_empty_subtitle">Ketuk + untuk memulai percakapan permanen. Sesi disimpan di instance kamu dan dibagikan ke semua permukaan Hermes.</string>
     <string name="sessions_message_count">%1$d pesan</string>
