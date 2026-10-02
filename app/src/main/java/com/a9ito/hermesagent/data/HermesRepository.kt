@@ -107,18 +107,19 @@ class HermesRepository(
 
     private fun apiFor(config: ConnectionConfig): HermesApi {
         tokenRef.set(config.token)
+        val base = config.effectiveBaseUrl
         val existing = cachedApi
-        if (existing != null && cachedBaseUrl == config.baseUrl) return existing
+        if (existing != null && cachedBaseUrl == base) return existing
 
         @Suppress("OPT_IN_USAGE")
         val contentType = "application/json".toMediaType()
         val retrofit = Retrofit.Builder()
-            .baseUrl(config.baseUrl)
+            .baseUrl(base)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
         val api = retrofit.create(HermesApi::class.java)
-        cachedBaseUrl = config.baseUrl
+        cachedBaseUrl = base
         cachedApi = api
         return api
     }
@@ -190,7 +191,7 @@ class HermesRepository(
         require(config.isComplete)
         tokenRef.set(config.token)
         val payload = ChatCompletionPayload.encode(json, model, history, stream = true, provider = provider, attachments = attachments)
-        streamer.stream(config.baseUrl, payload).collect { emit(it) }
+        streamer.stream(config.effectiveBaseUrl, payload).collect { emit(it) }
     }
 
     fun classify(t: Throwable): ErrorKind = ErrorMapper.classify(t)
@@ -405,7 +406,7 @@ class HermesRepository(
         require(config.isComplete)
         tokenRef.set(config.token)
         val payload = SessionChatPayload.encode(json, message, attachments, model = null)
-        sessionStreamer.stream(config.baseUrl, sessionId, payload).collect { emit(it) }
+        sessionStreamer.stream(config.effectiveBaseUrl, sessionId, payload).collect { emit(it) }
     }
 
     // ---- Cron jobs ----
@@ -524,7 +525,7 @@ class HermesRepository(
     fun streamRunEvents(config: ConnectionConfig, runId: String): Flow<RunStreamEvent> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        runStreamer.stream(config.baseUrl, runId).collect { emit(it) }
+        runStreamer.stream(config.effectiveBaseUrl, runId).collect { emit(it) }
     }
 
     suspend fun stopRun(config: ConnectionConfig, runId: String): ApiResult<Unit> =

@@ -176,6 +176,10 @@
     <string name="settings_save">Simpan</string>
     <string name="settings_saved">Pengaturan tersimpan</string>
     <string name="settings_clear">Hapus koneksi tersimpan</string>
+    <string name="settings_profile_label">Profil (opsional)</string>
+    <string name="settings_profile_placeholder">default</string>
+    <string name="settings_profile_supporting">Kosongkan untuk profil default. Isi nama buat routing lewat profil multiplex di /p/&lt;nama&gt;/.</string>
+    <string name="settings_error_profile_invalid">Pakai huruf, angka, titik, strip, atau garis bawah saja.</string>
     <!-- Appearance -->
     <string name="appearance_header">Tampilan</string>
     <string name="appearance_theme_mode">Tema</string>

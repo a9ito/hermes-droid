@@ -82,6 +82,7 @@ fun SettingsScreen(
             onHostChange = viewModel::onHostChange,
             onPortChange = viewModel::onPortChange,
             onTokenChange = viewModel::onTokenChange,
+            onProfileChange = viewModel::onProfileChange,
             onToggleToken = viewModel::toggleTokenVisibility,
             onSave = viewModel::save,
             onClear = viewModel::clear,
@@ -105,6 +106,7 @@ private fun SettingsContent(
     onHostChange: (String) -> Unit,
     onPortChange: (String) -> Unit,
     onTokenChange: (String) -> Unit,
+    onProfileChange: (String) -> Unit,
     onToggleToken: () -> Unit,
     onSave: () -> Unit,
     onClear: () -> Unit,
@@ -195,6 +197,23 @@ private fun SettingsContent(
                 )
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        )
+
+        val profileError = state.invalidField == SettingsField.PROFILE
+        OutlinedTextField(
+            value = state.profile,
+            onValueChange = onProfileChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.settings_profile_label)) },
+            placeholder = { Text(stringResource(R.string.settings_profile_placeholder)) },
+            singleLine = true,
+            isError = profileError,
+            supportingText = {
+                Text(
+                    if (profileError) stringResource(R.string.settings_error_profile_invalid)
+                    else stringResource(R.string.settings_profile_supporting),
+                )
+            },
         )
 
         state.resolvedEndpoint?.let { endpoint ->

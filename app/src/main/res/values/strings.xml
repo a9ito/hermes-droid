@@ -176,6 +176,10 @@
     <string name="settings_save">Save</string>
     <string name="settings_saved">Settings saved</string>
     <string name="settings_clear">Clear saved connection</string>
+    <string name="settings_profile_label">Profile (optional)</string>
+    <string name="settings_profile_placeholder">default</string>
+    <string name="settings_profile_supporting">Leave blank for the default profile. Enter a name to route through a multiplex profile at /p/&lt;name&gt;/.</string>
+    <string name="settings_error_profile_invalid">Use only letters, numbers, dot, dash, or underscore.</string>
     <!-- Appearance -->
     <string name="appearance_header">Appearance</string>
     <string name="appearance_theme_mode">Theme</string>
