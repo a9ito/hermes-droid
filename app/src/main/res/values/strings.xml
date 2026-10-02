@@ -33,7 +33,6 @@
     <string name="sessions_new_model_label">Model</string>
     <string name="sessions_new_model_default">Instance default</string>
     <string name="sessions_new_create">Create</string>
-    <string name="sessions_new_advanced">Options</string>
     <string name="sessions_empty_title">No sessions yet</string>
     <string name="sessions_empty_subtitle">Tap + to start a persistent conversation. Sessions are stored on your instance and shared with every Hermes surface.</string>
     <string name="sessions_message_count">%1$d messages</string>
