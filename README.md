@@ -15,9 +15,10 @@ Built with Kotlin + Jetpack Compose and a Material 3 **Expressive** UI.
 ## Features
 
 - **Chat** — a quick, stateless conversation over the OpenAI-compatible
-  `/v1/chat/completions` endpoint, with streaming (SSE) replies and optional
-  **image attachments**. Good for one-off questions; history lives only on the
-  phone for the current screen.
+  `/v1/chat/completions` endpoint, with streaming (SSE) replies, optional
+  **image attachments**, and a per-turn **reasoning effort + fast-mode**
+  control. Good for one-off questions; history lives only on the phone for the
+  current screen.
 - **Sessions** — the persistent side. List, open, create (with a chosen model
   and system prompt), rename, fork, **pin**, **archive** and delete the real
   server-side sessions your instance keeps (`/api/sessions`). The list has live
@@ -29,7 +30,8 @@ Built with Kotlin + Jetpack Compose and a Material 3 **Expressive** UI.
   calls with status, mid-turn commentary), completed turns keep a
   **collapsible reasoning** trace, and the transcript can **reveal
   compaction-archived turns**. Pinned sessions float to the top; each session
-  can be locked to a specific model from the picker in its app bar.
+  can be locked to a specific model from the picker in its app bar, and each
+  turn can set its **reasoning effort + fast mode**.
 - **Runs** — submit durable background runs and watch their live SSE event
   stream, with server-side tool-call approvals, steering and stop
   (`/v1/runs`). The tab for driving longer agent work rather than a chat.
