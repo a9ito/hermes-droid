@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.a9ito.hermesagent.core.CleartextPolicy
 import com.a9ito.hermesagent.core.ProfileRoute
 import com.a9ito.hermesagent.core.UrlNormalizer
 import com.a9ito.hermesagent.data.SettingsRepository
@@ -26,6 +27,12 @@ data class SettingsUiState(
     val saved: Boolean = false,
     val cleared: Boolean = false,
     val loaded: Boolean = false,
+    /**
+     * Set to the resolved base URL when a save was held back because it targets
+     * cleartext HTTP on a non-local host; the UI shows a confirmation dialog and
+     * calls [confirmSaveCleartext] to proceed or [dismissCleartextWarning] to cancel.
+     */
+    val pendingCleartextUrl: String? = null,
 )
 
 class SettingsViewModel(
@@ -79,12 +86,14 @@ class SettingsViewModel(
         }
         when (val result = UrlNormalizer.normalize(s.host, s.port)) {
             is UrlNormalizer.Result.Ok -> {
-                viewModelScope.launch {
-                    settings.save(baseUrl = result.baseUrl, token = s.token, profile = normalizedProfile)
-                    _state.update {
-                        it.copy(resolvedEndpoint = result.baseUrl, saved = true, invalidField = null)
-                    }
+                // Sending a terminal-exec bearer token over plain HTTP to a
+                // non-local host is a MITM risk; hold the save and let the UI
+                // confirm. Loopback/LAN cleartext and all HTTPS save straight away.
+                if (CleartextPolicy.requiresCleartextConfirmation(result.baseUrl)) {
+                    _state.update { it.copy(pendingCleartextUrl = result.baseUrl, invalidField = null) }
+                    return
                 }
+                persist(result.baseUrl, s.token, normalizedProfile)
             }
             UrlNormalizer.Result.EmptyHost ->
                 _state.update { it.copy(invalidField = SettingsField.HOST) }
@@ -92,6 +101,27 @@ class SettingsViewModel(
                 _state.update { it.copy(invalidField = SettingsField.PORT) }
             is UrlNormalizer.Result.InvalidHost ->
                 _state.update { it.copy(invalidField = SettingsField.HOST) }
+        }
+    }
+
+    /** Proceed with a save the user confirmed despite the cleartext warning. */
+    fun confirmSaveCleartext() {
+        val s = _state.value
+        val url = s.pendingCleartextUrl ?: return
+        val normalizedProfile = ProfileRoute.normalize(s.profile) ?: ProfileRoute.DEFAULT
+        _state.update { it.copy(pendingCleartextUrl = null) }
+        persist(url, s.token, normalizedProfile)
+    }
+
+    /** Dismiss the cleartext confirmation without saving. */
+    fun dismissCleartextWarning() = _state.update { it.copy(pendingCleartextUrl = null) }
+
+    private fun persist(baseUrl: String, token: String, profile: String) {
+        viewModelScope.launch {
+            settings.save(baseUrl = baseUrl, token = token, profile = profile)
+            _state.update {
+                it.copy(resolvedEndpoint = baseUrl, saved = true, invalidField = null)
+            }
         }
     }
 

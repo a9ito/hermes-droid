@@ -224,6 +224,10 @@
     <string name="settings_cleared">Koneksi dihapus</string>
 
     <string name="settings_resolved_endpoint">Endpoint hasil: %1$s</string>
+    <string name="settings_cleartext_title">Koneksi tidak aman</string>
+    <string name="settings_cleartext_body">Alamat ini pakai http:// polos ke host yang bukan di jaringan lokalmu. Token API ini menjaga endpoint yang bisa menjalankan perintah terminal, dan siapa pun di antara HP ini dan host tersebut bisa membacanya. Tetap lanjut?</string>
+    <string name="settings_cleartext_confirm">Tetap simpan</string>
+    <string name="settings_cleartext_cancel">Batal</string>
     <string name="settings_error_token_required">Masukkan token API.</string>
     <string name="settings_error_port_invalid">Port harus angka antara 1 dan 65535.</string>
     <string name="settings_error_host_invalid">Itu sepertinya bukan host atau URL yang valid.</string>

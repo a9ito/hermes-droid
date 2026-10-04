@@ -224,6 +224,10 @@
     <string name="settings_cleared">Connection cleared</string>
 
     <string name="settings_resolved_endpoint">Resolved endpoint: %1$s</string>
+    <string name="settings_cleartext_title">Insecure connection</string>
+    <string name="settings_cleartext_body">This address uses plain http:// to a host that is not on your local network. The API token protects an endpoint that can run terminal commands, and anything between this phone and that host could read it. Continue anyway?</string>
+    <string name="settings_cleartext_confirm">Save anyway</string>
+    <string name="settings_cleartext_cancel">Cancel</string>
     <string name="settings_error_token_required">Enter the API token.</string>
     <string name="settings_error_port_invalid">Port must be a number between 1 and 65535.</string>
     <string name="settings_error_host_invalid">That doesn\'t look like a valid host or URL.</string>
