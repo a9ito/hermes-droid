@@ -45,9 +45,10 @@ Built with Kotlin + Jetpack Compose and a Material 3 **Expressive** UI.
 - **Settings** — point the app at your Hermes Agent API server (host/URL, port,
   token), optionally selecting a **multiplex profile** (routes through
   `/p/<profile>/`). The token is encrypted with an AndroidKeyStore-backed
-  AES/GCM key and is never logged or stored in plaintext. An **Appearance**
-  section customizes theme mode, dynamic color, pure-black (OLED), accent
-  palette, font, display size, and corner style.
+  AES/GCM key and is never logged or stored in plaintext. Saving a plain
+  `http://` address that is not loopback or private-LAN asks for confirmation
+  first. An **Appearance** section customizes theme mode, dynamic color,
+  pure-black (OLED), accent palette, font, display size, and corner style.
 
 Feature tabs beyond Settings are gated behind a saved host + token, and each
 gates itself on the instance's reported **capabilities** so a surface the

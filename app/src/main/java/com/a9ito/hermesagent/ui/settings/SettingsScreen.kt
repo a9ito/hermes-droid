@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -86,6 +87,8 @@ fun SettingsScreen(
             onToggleToken = viewModel::toggleTokenVisibility,
             onSave = viewModel::save,
             onClear = viewModel::clear,
+            onConfirmCleartextSave = viewModel::confirmSaveCleartext,
+            onDismissCleartextWarning = viewModel::dismissCleartextWarning,
             onThemeMode = appearanceViewModel::setThemeMode,
             onDynamicColor = appearanceViewModel::setDynamicColor,
             onPureBlack = appearanceViewModel::setPureBlack,
@@ -110,6 +113,8 @@ private fun SettingsContent(
     onToggleToken: () -> Unit,
     onSave: () -> Unit,
     onClear: () -> Unit,
+    onConfirmCleartextSave: () -> Unit,
+    onDismissCleartextWarning: () -> Unit,
     onThemeMode: (ThemeMode) -> Unit,
     onDynamicColor: (Boolean) -> Unit,
     onPureBlack: (Boolean) -> Unit,
@@ -218,6 +223,33 @@ private fun SettingsContent(
 
         state.resolvedEndpoint?.let { endpoint ->
             Text(stringResource(R.string.settings_resolved_endpoint, endpoint))
+        }
+
+        // Hold the save when it targets plain http:// on a non-local host: the
+        // bearer token guards an endpoint that can run terminal commands, so
+        // sending it over an unencrypted hop to the open internet deserves an
+        // explicit warning rather than a silent save.
+        state.pendingCleartextUrl?.let { url ->
+            AlertDialog(
+                onDismissRequest = onDismissCleartextWarning,
+                title = { Text(stringResource(R.string.settings_cleartext_title)) },
+                text = {
+                    Text(
+                        stringResource(R.string.settings_cleartext_body) +
+                            "\n\n" + url
+                    )
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismissCleartextWarning) {
+                        Text(stringResource(R.string.settings_cleartext_cancel))
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = onConfirmCleartextSave) {
+                        Text(stringResource(R.string.settings_cleartext_confirm))
+                    }
+                },
+            )
         }
 
         Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
