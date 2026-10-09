@@ -36,8 +36,17 @@ object CleartextPolicy {
 
         // IPv6
         if (h == "::1") return true
-        if (h.startsWith("fe80:")) return true // link-local
-        if (h.startsWith("fc") || h.startsWith("fd")) return true // unique-local fc00::/7
+        // Only an actual IPv6 literal (which, after hostOf stripped the brackets
+        // and :port, is the only thing that still contains a ':') can be
+        // link-local or unique-local. Gate these prefix checks on that, otherwise
+        // a PUBLIC hostname that merely BEGINS with "fc"/"fd" (fc2.com,
+        // fd.example.net, fcm.googleapis.com) is misread as local and silently
+        // skips the cleartext-to-public-host warning this policy exists to raise.
+        if (h.contains(':')) {
+            if (h.startsWith("fe80:")) return true // link-local fe80::/10
+            if (h.startsWith("fc") || h.startsWith("fd")) return true // unique-local fc00::/7
+            return false // any other IPv6 literal is public
+        }
 
         // IPv4
         val octets = h.split(".")
