@@ -234,8 +234,30 @@ version ranges, no SNAPSHOTs. The Gradle wrapper pins a
   (the user explicitly grants each read). `ImageAttachmentLoader` rejects
   non-`image/*` content and anything over `MAX_BYTES` (4 MB); both chat paths cap
   at `MAX_PER_TURN` (4) images. Encoded as a `data:` URL in a pure builder.
-- **URL parsing**: `UrlNormalizer` enforces http/https only, validates the port
-  range (1..65535), and guarantees a trailing-slash base; no scheme smuggling.
+- **URL parsing**: `UrlNormalizer` enforces http/https only, rejects userinfo
+  (`@` in the authority, Finding B), validates the port range (1..65535), and
+  guarantees a trailing-slash base; no scheme smuggling.
+- **IP-obfuscation probe (this pass)**: the cleartext classifier was run against
+  decimal/octal/hex/single-integer host forms. Kotlin's `toIntOrNull` parses an
+  octet as decimal, so `010.0.0.1` reads as `10.0.0.1` — still genuinely in
+  10/8, so classifier-local matches reality-local. Non-dotted-quad forms (hex
+  octets, a single 32-bit integer) fail the four-octet test and fall through to
+  "public", which only ever adds a warning. No public address is ever
+  classified local (the only dangerous direction).
+- **Approval command is display-only**: the run approval dialog shows the
+  server-advertised `command` string in a plain `Text` with `maxLines`; the app
+  never executes it. The only action is POSTing the chosen approval verb back.
+- **SSE parsers fail closed**: both `SessionSseParser` and `RunSseParser` wrap
+  JSON decode in `runCatching` and map anything unparseable to `Ignored`, so a
+  malformed or hostile frame cannot crash the stream or emit a phantom delta.
+  Only a fixed allowlist of event names is acted on; unknown events are ignored.
+- **No polymorphic deserialization**: no `PolymorphicSerializer`,
+  `SerializersModule`, class discriminator, or contextual serializer anywhere —
+  there is no deserialization-gadget surface. Every `Json` instance that touches
+  server data sets `ignoreUnknownKeys`.
+- **Attachment OOM**: `readBytes()` runs inside a `catch (Throwable)` (so an
+  `OutOfMemoryError` on a huge stream degrades to "unreadable" rather than
+  crashing), the size cap rejects >4 MB, and the picker is `image/*`-filtered.
 - **Build/CI**: release build uses R8 minify + resource shrink with
   serialization-aware keep rules scoped to the DTO package. CI runs with
   `permissions: contents: read` and holds no secrets (runs on forks/PRs);
@@ -247,6 +269,8 @@ version ranges, no SNAPSHOTs. The Gradle wrapper pins a
 
 ## Recommendation
 
-Finding A is fixed and verified. With it in place there are no outstanding High,
-Critical, Medium, or Low findings beyond the two accepted/documented trade-offs.
-Cut v0.3.0 once CI is green on this change.
+Findings A and B are fixed and verified (217 pure-JVM tests green). With them in
+place there are no outstanding High, Critical, Medium, or Low findings beyond the
+two accepted/documented trade-offs (app-wide cleartext permission, no
+FLAG_SECURE). The client is in a releasable security posture. Cut v0.3.0 once CI
+is green on the merged fixes.
