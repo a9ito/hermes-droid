@@ -12,6 +12,12 @@ data class ConnectionConfig(
     val baseUrl: String,
     val token: String,
     val profile: String = ProfileRoute.DEFAULT,
+    /**
+     * User-entered TLS pins (`sha256/<base64>`), empty when pinning is off. When
+     * non-empty AND [baseUrl] is https, the networking layer rejects any server
+     * whose public-key hash is not in this set. Parsed/validated by [CertPin].
+     */
+    val certPins: List<String> = emptyList(),
 ) {
     /** True when both a base URL and a token are present — the chat gate. */
     val isComplete: Boolean
@@ -29,7 +35,7 @@ data class ConnectionConfig(
      * an accidental log/toString call.
      */
     override fun toString(): String =
-        "ConnectionConfig(baseUrl=$baseUrl, profile=$profile, token=***redacted***)"
+        "ConnectionConfig(baseUrl=$baseUrl, profile=$profile, pins=${certPins.size}, token=***redacted***)"
 
     companion object {
         val EMPTY = ConnectionConfig(baseUrl = "", token = "", profile = ProfileRoute.DEFAULT)
