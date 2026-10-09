@@ -111,4 +111,21 @@ class RunSseParserTest {
     @Test fun unknownEventIsIgnored() {
         assertTrue(feed("""data: {"event":"subagent.start","goal":"x"}""").single() is RunStreamEvent.Ignored)
     }
+
+    @Test fun approvalCommandBidiOverrideIsNeutralized() {
+        // A prompt-injected command with an RLO (U+202E) that would otherwise
+        // render reversed at the human approval gate (Trojan Source, CWE-451).
+        val ap = (feed(
+            """data: {"event":"approval.request","run_id":"r1","tool":"terminal","command":"echo \u202Esafe","choices":["once","deny"]}""",
+        ).single() as RunStreamEvent.ApprovalRequest).approval
+        assertTrue("RLO stripped from command", ap.command?.contains('\u202E') != true)
+        assertTrue("replaced with U+FFFD", ap.command?.contains('\uFFFD') == true)
+    }
+
+    @Test fun toolNameZeroWidthIsNeutralized() {
+        val started = feed(
+            """data: {"event":"tool.started","tool":"ter\u200Bminal","preview":"ls"}""",
+        ).single() as RunStreamEvent.ToolStarted
+        assertTrue(!started.tool.contains('\u200B'))
+    }
 }

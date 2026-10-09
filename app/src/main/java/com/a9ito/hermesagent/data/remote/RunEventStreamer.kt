@@ -36,8 +36,8 @@ class RunEventStreamer(
             }
             val source = response.body?.source() ?: return@flow
             val parser = RunSseParser(json)
-            while (!source.exhausted()) {
-                val line = source.readUtf8Line() ?: break
+            while (true) {
+                val line = SseLineReader.readLine(source) ?: break
                 val event = parser.onLine(line) ?: continue
                 emit(event)
                 if (event is RunStreamEvent.Done || event is RunStreamEvent.Terminal) break

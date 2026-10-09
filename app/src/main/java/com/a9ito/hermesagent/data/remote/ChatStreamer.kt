@@ -43,8 +43,8 @@ class ChatStreamer(
                 throw HttpStatusException(response.code)
             }
             val source = response.body?.source() ?: return@flow
-            while (!source.exhausted()) {
-                val line = source.readUtf8Line() ?: break
+            while (true) {
+                val line = SseLineReader.readLine(source) ?: break
                 when {
                     line.isEmpty() -> continue          // event boundary
                     line.startsWith(":") -> continue    // keep-alive comment

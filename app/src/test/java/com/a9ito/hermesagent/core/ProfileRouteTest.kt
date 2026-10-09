@@ -32,6 +32,17 @@ class ProfileRouteTest {
         assertNull(ProfileRoute.normalize("ampersand&"))
     }
 
+    @Test fun dotSegmentsRejected() {
+        // "." and ".." pass the charset but an HTTP stack collapses them in the
+        // /p/<profile>/ path, silently routing to a different profile. Reject.
+        assertNull(ProfileRoute.normalize("."))
+        assertNull(ProfileRoute.normalize(".."))
+        assertNull(ProfileRoute.normalize("  ..  "))
+        // A dotted name that is NOT a pure dot-segment stays valid.
+        assertEquals("v1.2", ProfileRoute.normalize("v1.2"))
+        assertEquals("...a", ProfileRoute.normalize("...a"))
+    }
+
     // -- isSecondary -----------------------------------------------------------
 
     @Test fun isSecondaryOnlyForRealProfiles() {
