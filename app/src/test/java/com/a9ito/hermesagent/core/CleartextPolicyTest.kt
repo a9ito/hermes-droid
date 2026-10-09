@@ -90,6 +90,29 @@ class CleartextPolicyTest {
         assertFalse(CleartextPolicy.isLocalHost("256.1.1.1"))
     }
 
+    @Test fun `public hostnames that merely start with fc or fd are not local`() {
+        // Regression: the IPv6 ULA prefix check must not swallow public DNS names
+        // that happen to begin with fc/fd, or their cleartext warning is skipped.
+        assertFalse(CleartextPolicy.isLocalHost("fc2.com"))
+        assertFalse(CleartextPolicy.isLocalHost("fcbarcelona.com"))
+        assertFalse(CleartextPolicy.isLocalHost("fd.example.net"))
+        assertFalse(CleartextPolicy.isLocalHost("fcm.googleapis.com"))
+        assertFalse(CleartextPolicy.isLocalHost("fe80.example.com")) // not an IPv6 literal
+    }
+
+    @Test fun `http to a public fc-prefixed host still requires confirmation`() {
+        assertTrue(CleartextPolicy.requiresCleartextConfirmation("http://fc2.com:8642/"))
+        assertTrue(CleartextPolicy.requiresCleartextConfirmation("http://fd.example.net/"))
+    }
+
+    @Test fun `real IPv6 ULA and link-local literals stay local`() {
+        // The fix must keep genuine fc00::/7 and fe80::/10 literals classified local.
+        assertTrue(CleartextPolicy.isLocalHost("fc00::1"))
+        assertTrue(CleartextPolicy.isLocalHost("fd12:3456::1"))
+        assertTrue(CleartextPolicy.isLocalHost("fe80::1"))
+        assertFalse(CleartextPolicy.requiresCleartextConfirmation("http://[fc00::1]:8642/"))
+    }
+
     // ---- hostOf ----
 
     @Test fun `hostOf extracts host from urls`() {
