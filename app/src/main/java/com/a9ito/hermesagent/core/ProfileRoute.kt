@@ -30,6 +30,12 @@ object ProfileRoute {
     fun normalize(raw: String?): String? {
         val t = raw?.trim().orEmpty()
         if (t.isEmpty() || t.equals(DEFAULT, ignoreCase = true)) return DEFAULT
+        // Reject the dot-segments "." and ".." outright: they pass the charset
+        // below but an HTTP stack collapses them in the "/p/<profile>/" path, so
+        // the user would silently route to a DIFFERENT profile than they typed
+        // instead of getting an invalid-name error. (No cross-host escape; the
+        // host and scheme are unchanged. CWE-20.)
+        if (t == "." || t == "..") return null
         return if (VALID.matches(t)) t else null
     }
 
