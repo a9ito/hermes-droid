@@ -29,11 +29,15 @@ object ImageAttachmentLoader {
         } ?: return@withContext Result.Error.Unreadable
         if (bytes.size > ChatAttachment.MAX_BYTES) return@withContext Result.Error.TooLarge
         if (bytes.isEmpty()) return@withContext Result.Error.Unreadable
+        // Strip GPS/location EXIF before the image leaves the device, so a photo's
+        // coordinates are not forwarded to the agent. Best-effort: returns the
+        // original bytes for non-JPEG or on failure (see ExifScrubber).
+        val scrubbed = ExifScrubber.stripLocation(context, bytes, mime)
         val displayName = queryDisplayName(context, uri)
         Result.Ok(
             ChatAttachment(
                 mimeType = mime,
-                base64Data = Base64.encodeToString(bytes, Base64.NO_WRAP),
+                base64Data = Base64.encodeToString(scrubbed, Base64.NO_WRAP),
                 displayName = displayName,
             ),
         )
