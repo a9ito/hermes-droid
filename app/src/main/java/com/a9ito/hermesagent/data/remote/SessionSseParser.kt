@@ -1,5 +1,6 @@
 package com.a9ito.hermesagent.data.remote
 
+import com.a9ito.hermesagent.core.SafeText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -78,9 +79,9 @@ class SessionSseParser(
             // Server folds reasoning.available into a tool.progress frame; the app
             // treats any tool.progress as "the agent is thinking".
             "tool.progress" -> SessionStreamEvent.Thinking
-            "tool.started" -> SessionStreamEvent.ToolStarted(str("tool_name"))
-            "tool.completed" -> SessionStreamEvent.ToolCompleted(str("tool_name"))
-            "tool.failed" -> SessionStreamEvent.ToolFailed(str("tool_name"))
+            "tool.started" -> SessionStreamEvent.ToolStarted(SafeText.forControlDisplay(str("tool_name")) ?: "")
+            "tool.completed" -> SessionStreamEvent.ToolCompleted(SafeText.forControlDisplay(str("tool_name")) ?: "")
+            "tool.failed" -> SessionStreamEvent.ToolFailed(SafeText.forControlDisplay(str("tool_name")) ?: "")
             "error" -> SessionStreamEvent.Failed(str("message"))
             "done" -> SessionStreamEvent.Done
             else -> SessionStreamEvent.Ignored

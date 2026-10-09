@@ -1,6 +1,7 @@
 package com.a9ito.hermesagent.data.remote
 
 import com.a9ito.hermesagent.core.RunApproval
+import com.a9ito.hermesagent.core.SafeText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -69,8 +70,8 @@ class RunSseParser(
         return when {
             name == "message.delta" -> RunStreamEvent.Delta(str("delta"))
             name == "message.interim" -> RunStreamEvent.Interim(str("text"))
-            name == "tool.started" -> RunStreamEvent.ToolStarted(str("tool"), strOrNull("preview"))
-            name == "tool.completed" -> RunStreamEvent.ToolCompleted(str("tool"), bool("error"))
+            name == "tool.started" -> RunStreamEvent.ToolStarted(SafeText.forControlDisplay(str("tool")) ?: "", SafeText.forControlDisplay(strOrNull("preview")))
+            name == "tool.completed" -> RunStreamEvent.ToolCompleted(SafeText.forControlDisplay(str("tool")) ?: "", bool("error"))
             name == "reasoning.available" -> RunStreamEvent.Reasoning(str("text"))
             name == "approval.request" -> RunStreamEvent.ApprovalRequest(parseApproval(obj))
             name.startsWith("run.") -> {
@@ -94,8 +95,10 @@ class RunSseParser(
         fun s(key: String) = (obj[key] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotEmpty() }
         return RunApproval(
             choices = choices,
-            tool = s("tool") ?: s("tool_name"),
-            command = s("command"),
+            // tool/command are shown at the human approval gate, so neutralize
+            // bidi/zero-width/control chars that could disguise what is approved.
+            tool = SafeText.forControlDisplay(s("tool") ?: s("tool_name")),
+            command = SafeText.forControlDisplay(s("command")),
             requestId = s("request_id"),
         )
     }

@@ -1,5 +1,6 @@
 package com.a9ito.hermesagent.data.remote.dto
 
+import com.a9ito.hermesagent.core.SafeText
 import com.a9ito.hermesagent.core.SessionMessage
 import com.a9ito.hermesagent.core.SessionSummary
 import kotlinx.serialization.json.JsonArray
@@ -66,7 +67,9 @@ fun SessionMessageDto.toDomain(): SessionMessage = SessionMessage(
     id = id ?: 0L,
     role = roleOf(role),
     text = extractMessageText(content),
-    toolName = toolName,
+    // toolName is shown as a "[tool: ...]" chip, a control-ish surface, so strip
+    // bidi/zero-width/control chars an injected name could carry (CWE-451).
+    toolName = SafeText.forControlDisplay(toolName),
     // reasoning and reasoning_content are the same text on this server; prefer the
     // shorter key, fall back to the other so a future divergence doesn't drop it.
     reasoning = reasoning?.takeIf { it.isNotBlank() } ?: reasoningContent?.takeIf { it.isNotBlank() },
