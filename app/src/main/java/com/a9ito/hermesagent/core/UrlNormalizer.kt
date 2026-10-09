@@ -64,6 +64,15 @@ object UrlNormalizer {
         val path = if (slashIdx == -1) "" else afterScheme.substring(slashIdx)
         if (authority.isEmpty()) return Result.InvalidHost(trimmedHost)
 
+        // Reject userinfo (`user:pass@host`). A Hermes API base URL has no
+        // legitimate use for it — the Bearer token is the only credential, and
+        // it rides in the Authorization header, not the URL. Worse, leaving it
+        // in would let a crafted authority like `localhost:8642@8.8.8.8:9999`
+        // read as the local host `localhost` to the cleartext classifier while
+        // OkHttp actually connects to the real host after the `@` (8.8.8.8), so
+        // the token would travel cleartext to a public host with no warning.
+        if (authority.contains('@')) return Result.InvalidHost(trimmedHost)
+
         // Detect a port already in the authority (guard against IPv6 "[::1]" — no port support needed here).
         val hasBracket = authority.startsWith("[")
         val authorityHostPart: String

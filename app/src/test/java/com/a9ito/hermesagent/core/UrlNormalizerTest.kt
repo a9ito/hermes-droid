@@ -48,6 +48,16 @@ class UrlNormalizerTest {
         assertTrue(UrlNormalizer.normalize("ftp://x", "") is UrlNormalizer.Result.InvalidHost)
     }
 
+    @Test fun userinfoInAuthorityIsRejected() {
+        // `user:pass@host` must never be accepted: it has no legitimate use in a
+        // Hermes base URL and would let a crafted authority read as a local host
+        // to the cleartext classifier while OkHttp connects to the real host
+        // after the `@`. See CleartextPolicy / SECURITY-AUDIT.md Finding B.
+        assertTrue(UrlNormalizer.normalize("localhost:8642@8.8.8.8:9999", "") is UrlNormalizer.Result.InvalidHost)
+        assertTrue(UrlNormalizer.normalize("127.0.0.1@evil.com", "8642") is UrlNormalizer.Result.InvalidHost)
+        assertTrue(UrlNormalizer.normalize("http://user@203.0.113.5:8642/", null) is UrlNormalizer.Result.InvalidHost)
+    }
+
     @Test fun nullPortAccepted() {
         assertEquals("https://h/", ok("https://h", null))
     }

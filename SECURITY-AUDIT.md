@@ -21,7 +21,7 @@ confidentiality depends on:
   look local) to prove the behavior rather than assume it.
 
 Local JVM verification: the pure core + dto + their unit tests compile with the
-kotlinx-serialization compiler plugin and pass (214 test methods, 19 classes).
+kotlinx-serialization compiler plugin and pass (217 test methods, 19 classes).
 The UI/Compose/Retrofit/okhttp layers are CI-verified only (aapt2/AGP do not run
 on this aarch64 Termux host).
 
@@ -29,6 +29,7 @@ on this aarch64 Termux host).
 
 | # | Finding | Severity | Status |
 |---|---------|----------|--------|
+| B | Userinfo in the base URL (`localhost@8.8.8.8`) disguised a public host as local, bypassing the cleartext gate | Medium | FIXED (this pass) |
 | A | `isLocalHost` treated any host starting with `fc`/`fd` as a private IPv6 ULA, so a public `http://` host like `fc2.com` skipped the cleartext warning | Medium | FIXED (this pass) |
 | 1 | Cleartext HTTP save to a public host saved silently | Medium | FIXED (pass 1, still in force) |
 | 2 | App-wide `cleartextTrafficPermitted` in network_security_config | Low | Accepted (documented trade-off) |
@@ -40,12 +41,45 @@ on this aarch64 Termux host).
 | 8 | Pinned dependencies clean of known vulns | Info | Verified OK (OSV, re-run) |
 | 9 | No logging of token, request bodies, or reasoning anywhere | Info | Verified OK |
 
-No High or Critical findings. One real defect (A) was found by this deeper pass
-and fixed; it was a latent bug in the pass-1 cleartext gate itself. The app's
-posture for a self-hosted client is otherwise sound: hardware-backed token
-encryption, no logging, no exported attack surface beyond the launcher activity,
-no WebView, no code exec, no reflection, no dynamic class loading, strict profile
-charset, images-only attachments with size and count caps.
+No High or Critical findings. Two real defects (A and B) were found by this
+deeper pass and fixed; both were latent holes in the pass-1 cleartext gate
+itself, and both let the terminal-exec bearer token leak in cleartext to a
+public host with no warning under a crafted base URL. The app's posture for a
+self-hosted client is otherwise sound: hardware-backed token encryption, no
+logging, no exported attack surface beyond the launcher activity, no WebView, no
+code exec, no reflection, no dynamic class loading, strict profile charset,
+images-only attachments with size and count caps.
+
+## Finding B — userinfo disguises a public host as local (FIXED)
+
+**Severity: Medium.** The cleartext gate decides "warn or not" from the host it
+extracts from the base URL. A URL authority may legally carry *userinfo* before
+the host: `scheme://user:pass@host:port/`. Neither `UrlNormalizer` nor
+`CleartextPolicy.hostOf` accounted for it, so a crafted authority split the two
+layers against each other. Verified by executing both components:
+
+```
+input host field: localhost:8642@8.8.8.8:9999
+UrlNormalizer -> ACCEPTED  http://localhost:8642@8.8.8.8:9999/
+CleartextPolicy.hostOf -> "localhost"   isLocalHost=true   requiresConfirmation=FALSE
+OkHttp actually connects to -> 8.8.8.8:9999  (the host after '@'; userinfo is stripped at connect)
+```
+
+So the classifier saw the fake local host `localhost` and saved silently, while
+every request then went in cleartext to the real public host `8.8.8.8` carrying
+the bearer token. Same class of bypass as Finding A, by a different mechanism.
+
+**Fix (this pass), defense in depth at both layers:**
+- `UrlNormalizer` now rejects any authority containing `@` as
+  `InvalidHost` — a Hermes base URL has no legitimate use for userinfo (the only
+  credential is the Bearer token, which rides in the Authorization header), so a
+  save with userinfo never persists.
+- `CleartextPolicy.hostOf` now strips userinfo (`substringAfterLast('@')`) before
+  reading the host, so even if a userinfo URL reached the classifier by any other
+  path, it resolves the real host after `@`, never the deceptive part before it.
+
+5 new tests (3 on `UrlNormalizer`, 2 on `CleartextPolicy`) pin the rejection and
+the real-host resolution. 217 pure-JVM tests green.
 
 ## Finding A — public `fc*`/`fd*` hostnames misclassified as local (FIXED)
 
@@ -106,9 +140,19 @@ comment stating exactly this.
 ## Finding 3 — Authorization header on cross-host redirect (verified safe)
 
 OkHttp's `RetryAndFollowUpInterceptor` removes the `Authorization` header when a
-redirect cannot reuse the connection (host/scheme/port change) — confirmed in the
-pinned 4.12.0 source this pass. A malicious redirect cannot exfiltrate the token
-to a different host. Same-host redirects keep the header, which is correct.
+redirect cannot reuse the connection — confirmed in the pinned 4.12.0 source this
+pass (`RetryAndFollowUpInterceptor` line 326-327, and the predicate in
+`Util.kt`):
+
+```kotlin
+fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean =
+    host == other.host && port == other.port && scheme == other.scheme
+```
+
+Because the check includes `scheme`, even a same-host **https -> http downgrade**
+redirect strips the token, not just a host change. A malicious redirect cannot
+exfiltrate the token to a different host or downgrade it onto cleartext.
+Same-host, same-scheme redirects keep the header, which is correct.
 
 ## Finding 4 — Profile name in URL routing (verified safe)
 
