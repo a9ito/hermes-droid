@@ -139,26 +139,45 @@ Proof: `ProfileRouteTest.dotSegmentsRejected`.
     phantom delta), oversized lines bounded (F-1), malformed `content` extracted
     safely. 235 JVM tests cover these paths.
 
-### Residual risks (recommendations, not code, out of this release's scope)
-- No `FLAG_SECURE`: a revealed token or transcript can appear in the recents
-  thumbnail / screenshots. Behavior change; recommend opt-in.
-- Token field does not disable autofill: a token could be captured by an autofill
-  provider. Recommend `importantForAutofill="no"`.
-- No TLS certificate pinning for HTTPS deployments. New feature.
-- Attached images keep EXIF/GPS; forwarded to the agent. Recommend optional strip.
-- Approval dialog lacks tapjacking protection (`filterTouchesWhenObscured`); no
-  clean Compose equivalent today.
-- Supply-chain hardening: add Gradle dependency-verification metadata; keep
-  first-party Actions SHA-pinned.
-- Transcript/answer total growth is inherent to streaming (each line is now
-  bounded by F-1); recommend a soft total cap.
+### Residual risks
+
+Hardened in a follow-up pass (branch `security/residual-hardening`, after the
+v0.3.2 release of F-1..F-3):
+
+- **FLAG_SECURE (done).** `MainActivity` sets `FLAG_SECURE`, so the window stays
+  out of the recents thumbnail, screenshots, and non-secure external displays.
+  Tradeoff: in-app screenshots are blocked. Behavior change, verified by CI
+  compile; on-device check pending.
+- **Autofill disabled (done).** The decor view is
+  `importantForAutofill = NO_EXCLUDE_DESCENDANTS`, so the token is never offered
+  to or saved by an autofill provider.
+- **Tapjacking (done).** The content view sets `filterTouchesWhenObscured`, so a
+  touch arriving while another app's overlay covers the window is dropped,
+  mitigating overlay attacks on destructive controls and the approval dialog.
+- **EXIF/GPS strip (done).** `ExifScrubber` clears a JPEG's GPS/location tags
+  before the image is encoded and sent (best-effort: non-JPEG and failures pass
+  through; the user chose to send the image to their own instance).
+
+Still open (recommendations, not in these passes):
+
+- **No TLS certificate pinning** for HTTPS deployments. New feature; a
+  self-hosted instance's cert/CA is user-specific, so pinning needs a
+  user-provided pin UI. Deferred.
+- **Gradle dependency verification metadata** (`gradle/verification-metadata.xml`)
+  is not generated; doing so requires a full dependency resolve that cannot run
+  on this device (no Android SDK). Recommended as a CI-side task.
+- **Transcript/answer total growth** is inherent to streaming (each line is now
+  bounded by F-1); a soft total cap is still recommended.
 
 ### Verification status
-Compiled and unit-tested on-device via the pure-JVM harness: 235 tests pass.
-`./gradlew lintDebug`, `assembleDebug`, and the full Android build are
-`[unverified]` on this host (no Android SDK/aapt2) and must be confirmed green in
-CI before any tag. Branch `security/full-audit` was NOT pushed and NO tag was
-created.
+Compiled and unit-tested on-device via the pure-JVM harness: 235 tests pass
+(the residual hardening is android.* window/EXIF code, outside the harness, so
+it is CI-compile + on-device verified, not unit-tested). `./gradlew lintDebug`,
+`assembleDebug`, and the full Android build are `[unverified]` on this host (no
+Android SDK/aapt2) and must be confirmed green in CI before any tag. The F-1..F-3
+branch `security/full-audit` shipped as v0.3.2 (CI green, APK signer cert
+verified). The residual hardening (FLAG_SECURE, autofill, tapjacking, EXIF)
+lands on `security/residual-hardening`.
 
 ---
 
