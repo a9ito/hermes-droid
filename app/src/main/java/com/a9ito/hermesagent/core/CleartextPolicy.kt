@@ -76,11 +76,16 @@ object CleartextPolicy {
         val sep = baseUrl.indexOf("://")
         val afterScheme = if (sep == -1) baseUrl else baseUrl.substring(sep + 3)
         val authority = afterScheme.substringBefore('/').substringBefore('?')
-        if (authority.startsWith("[")) {
+        // Strip any userinfo so the real host is classified, not the part before
+        // `@`. UrlNormalizer rejects userinfo before a save, but this classifier
+        // must not depend on that: a crafted `localhost@8.8.8.8` has to resolve
+        // to the real host `8.8.8.8`, never the deceptive `localhost`.
+        val hostPort = authority.substringAfterLast('@')
+        if (hostPort.startsWith("[")) {
             // [IPv6](:port) — take what's inside the brackets.
-            return authority.substringAfter('[').substringBefore(']')
+            return hostPort.substringAfter('[').substringBefore(']')
         }
-        return authority.substringBefore(':')
+        return hostPort.substringBefore(':')
     }
 
     /**

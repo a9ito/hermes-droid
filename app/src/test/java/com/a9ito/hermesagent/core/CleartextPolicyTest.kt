@@ -127,6 +127,20 @@ class CleartextPolicyTest {
         assertEquals("", CleartextPolicy.hostOf("http://"))
     }
 
+    @Test fun `hostOf strips userinfo and returns the real host`() {
+        // Defense in depth: even though UrlNormalizer rejects userinfo before a
+        // save, the classifier must resolve the real host (after `@`), never the
+        // deceptive part before it.
+        assertEquals("8.8.8.8", CleartextPolicy.hostOf("http://localhost:8642@8.8.8.8:9999/"))
+        assertEquals("evil.com", CleartextPolicy.hostOf("http://127.0.0.1@evil.com:8642/"))
+        assertEquals("::1", CleartextPolicy.hostOf("http://user:pass@[::1]:8642/"))
+    }
+
+    @Test fun `userinfo cannot disguise a public host as local`() {
+        assertTrue(CleartextPolicy.requiresCleartextConfirmation("http://localhost:8642@8.8.8.8:9999/"))
+        assertTrue(CleartextPolicy.requiresCleartextConfirmation("http://127.0.0.1@evil.com:8642/"))
+    }
+
     // ---- requiresCleartextConfirmation (the gate) ----
 
     @Test fun `http to public host requires confirmation`() {
