@@ -43,7 +43,7 @@ android {
     // the supported-locale set explicit. `localeFilters` is the AGP 8.5+/9.x
     // replacement for the deprecated `resourceConfigurations` locale list.
     androidResources {
-        localeFilters += listOf("en", "in")
+        localeFilters += listOf("en", "in", "ja")
     }
 
     signingConfigs {

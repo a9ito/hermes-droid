@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Japanese (日本語) strings for Hermes Droid.
+
+   Every id here mirrors values/strings.xml one-for-one. Keep them in sync when
+   adding new strings. Standard polite/neutral Japanese UI register; loanwords
+   stay in katakana where that is the conventional term. Japanese shinjitai kanji
+   only (never Simplified Chinese forms). Interpolation placeholders (%1$s,
+   %1$d, %2$s) are copied verbatim.
+-->
+<resources>
+
+    <!-- App -->
+    <string name="app_name">Hermes Droid</string>
+
+    <!-- 下部ナビゲーション / 画面タイトル -->
+    <string name="nav_chat">チャット</string>
+    <string name="nav_sessions">セッション</string>
+    <string name="nav_runs">ラン</string>
+    <string name="nav_tools">ツール</string>
+    <string name="nav_jobs">ジョブ</string>
+    <string name="nav_status">ステータス</string>
+    <string name="nav_settings">設定</string>
+    <string name="nav_more">その他</string>
+    <string name="nav_menu_close">メニューを閉じる</string>
+
+    <!-- ============================ セッション画面 ============================ -->
+    <string name="sessions_new">新しいセッション</string>
+    <!-- New-session dialog (optional model + system prompt) -->
+    <string name="sessions_new_title">新しいセッション</string>
+    <string name="sessions_new_name_label">タイトル（任意）</string>
+    <string name="sessions_new_system_label">システムプロンプト（任意）</string>
+    <string name="sessions_new_model_label">モデル</string>
+    <string name="sessions_new_model_default">インスタンスのデフォルト</string>
+    <string name="sessions_new_create">作成</string>
+    <string name="sessions_empty_title">セッションはまだありません</string>
+    <string name="sessions_empty_subtitle">＋をタップして永続的な会話を始めましょう。セッションはインスタンスに保存され、すべての Hermes 画面で共有されます。</string>
+    <string name="sessions_message_count">%1$d 件のメッセージ</string>
+    <string name="sessions_fork_badge">フォーク</string>
+    <string name="sessions_rename_action">名前を変更</string>
+    <string name="sessions_fork_action">フォーク</string>
+    <string name="sessions_pin_action">ピン留め</string>
+    <string name="sessions_unpin_action">ピン留めを解除</string>
+    <string name="sessions_pinned_badge">ピン留め</string>
+    <string name="sessions_archive_action">アーカイブ</string>
+    <string name="sessions_search_hint">セッションを検索</string>
+    <string name="sessions_search_clear">検索をクリア</string>
+    <string name="sessions_source_all">すべて</string>
+    <string name="sessions_search_empty">「%1$s」に一致するセッションはありません。</string>
+    <string name="sessions_archive_title">セッションをアーカイブしますか？</string>
+    <string name="sessions_archive_message">「%1$s」はこの一覧から非表示になります。インスタンスには残り、デスクトップから復元できます。</string>
+    <string name="sessions_archive_confirm">アーカイブ</string>
+    <string name="sessions_rename_title">セッション名を変更</string>
+    <string name="sessions_rename_confirm">名前を変更</string>
+    <string name="sessions_delete_title">セッションを削除しますか？</string>
+    <string name="sessions_delete_message">「%1$s」とそのトランスクリプトはインスタンス上から完全に削除されます。</string>
+    <string name="sessions_delete_confirm">削除</string>
+    <string name="sessions_error_prefix">セッションを読み込めませんでした: %1$s</string>
+    <string name="sessions_locked_title">接続が必要です</string>
+    <string name="sessions_locked_subtitle">セッションを閲覧するには、設定でホストと API トークンを追加してください。</string>
+    <string name="session_chat_title">セッション</string>
+    <string name="session_overflow">その他のオプション</string>
+    <string name="session_show_compacted">圧縮されたターンを表示</string>
+    <string name="session_hide_compacted">圧縮されたターンを非表示</string>
+    <!-- Reasoning / speed controls -->
+    <string name="reasoning_title">推論と速度</string>
+    <string name="reasoning_menu">推論: %1$s</string>
+    <string name="reasoning_effort_label">思考の強度</string>
+    <string name="reasoning_effort_default">デフォルト</string>
+    <string name="reasoning_effort_off">無効</string>
+    <string name="reasoning_effort_minimal">最小</string>
+    <string name="reasoning_effort_low">低</string>
+    <string name="reasoning_effort_medium">中</string>
+    <string name="reasoning_effort_high">高</string>
+    <string name="reasoning_effort_xhigh">非常に高い</string>
+    <string name="reasoning_effort_max">最大</string>
+    <string name="reasoning_effort_ultra">ウルトラ</string>
+    <string name="reasoning_fast">高速モード</string>
+    <string name="reasoning_fast_sub">プロバイダーが対応している場合、優先サービスティアをリクエストします。</string>
+    <string name="reasoning_done">完了</string>
+    <string name="reasoning_badge_fast">高速, %1$s</string>
+    <string name="session_model_pick">モデル</string>
+    <string name="session_model_title">このセッションのモデル</string>
+    <!-- Rich model picker (from /api/model/options) -->
+    <string name="model_free_tier">無料枠</string>
+    <string name="model_needs_key">キーが必要</string>
+    <string name="model_price_free">無料</string>
+    <string name="model_price_io">入力 %1$s / 出力 %2$s</string>
+    <string name="model_reasoning">推論</string>
+    <string name="model_fast">高速</string>
+    <string name="model_unavailable">このティアでは利用できません</string>
+    <string name="model_checking_tier">ティアを確認中…</string>
+
+    <!-- ============================ ツール画面 ============================ -->
+    <string name="tools_tab_skills">スキル</string>
+    <string name="tools_tab_toolsets">ツールセット</string>
+    <string name="tools_enabled">有効</string>
+    <string name="tools_disabled">無効</string>
+    <string name="tools_empty">表示する項目がありません。</string>
+    <string name="tools_locked_title">接続が必要です</string>
+    <string name="tools_locked_subtitle">スキルとツールセットを表示するには、設定でホストと API トークンを追加してください。</string>
+
+    <!-- 共通アクション -->
+    <string name="action_back">戻る</string>
+
+    <!-- チャットの添付 -->
+    <string name="chat_attach_add">画像を添付</string>
+    <string name="chat_attach_remove">添付を削除</string>
+    <string name="chat_attach_image_generic">画像</string>
+    <string name="chat_attach_not_image">添付できるのは画像のみです。</string>
+    <string name="chat_attach_too_large">画像が大きすぎます（最大 4 MB）。</string>
+    <string name="chat_attach_failed">その画像を読み込めませんでした。</string>
+    <string name="chat_attachment_badge">%1$d 枚の画像を添付</string>
+    <string name="chat_copied">クリップボードにコピーしました</string>
+
+    <!-- ============================ ラン画面 ============================ -->
+    <string name="runs_prompt_label">エージェントに作業を依頼…</string>
+    <string name="runs_submit">ランを開始</string>
+    <string name="runs_locked_title">接続が必要です</string>
+    <string name="runs_locked_subtitle">エージェントのランを開始するには、設定でホストと API トークンを追加してください。</string>
+    <string name="runs_unsupported_title">ランは未対応です</string>
+    <string name="runs_unsupported_subtitle">このインスタンスはラン制御 API（submit/stop/events）を提供していません。この画面を使うにはゲートウェイを更新してください。</string>
+    <string name="runs_caps_failed_title">このインスタンスを確認できませんでした</string>
+    <string name="runs_caps_failed_subtitle">このインスタンスの対応機能を読み取れませんでした: %1$s。多くの場合これは機能不足ではなく、接続かトークンの問題です。ステータスを確認してから再試行してください。</string>
+    <string name="runs_error_prefix">ランが失敗しました: %1$s</string>
+    <string name="runs_activity">アクティビティ</string>
+    <string name="runs_stop">停止</string>
+    <string name="runs_steer">誘導</string>
+    <string name="runs_steer_title">ランを誘導</string>
+    <string name="runs_steer_label">実行中のエージェントへの追加の指示</string>
+    <string name="runs_steer_send">送信</string>
+    <string name="runs_approval_title">ツールの呼び出しを承認しますか？</string>
+    <string name="runs_approval_tool">ツール: %1$s</string>
+    <string name="runs_state_queued">待機中</string>
+    <string name="runs_state_running">実行中…</string>
+    <string name="runs_state_waiting">承認待ち</string>
+    <string name="runs_state_stopping">停止中…</string>
+    <string name="runs_state_completed">完了</string>
+    <string name="runs_state_failed">失敗</string>
+    <string name="runs_state_cancelled">キャンセル</string>
+    <string name="runs_state_interrupted">中断</string>
+    <string name="runs_state_unknown">不明</string>
+
+    <!-- ============================ ジョブ画面 ============================ -->
+    <string name="jobs_new">新しいジョブ</string>
+    <string name="jobs_edit">ジョブを編集</string>
+    <string name="jobs_edit_action">編集</string>
+    <string name="jobs_save_confirm">保存</string>
+    <string name="jobs_empty_title">予約されたジョブはありません</string>
+    <string name="jobs_empty_subtitle">＋をタップして繰り返しのプロンプトを予約しましょう。ジョブはアプリを閉じていてもスケジュールどおりインスタンス上で実行されます。</string>
+    <string name="jobs_error_prefix">ジョブを読み込めませんでした: %1$s</string>
+    <string name="jobs_locked_title">接続が必要です</string>
+    <string name="jobs_locked_subtitle">予約ジョブを管理するには、設定でホストと API トークンを追加してください。</string>
+    <string name="jobs_meta">%1$s • %2$s</string>
+    <string name="jobs_next_run">次回: %1$s</string>
+    <string name="jobs_run">今すぐ実行</string>
+    <string name="jobs_pause">一時停止</string>
+    <string name="jobs_resume">再開</string>
+    <string name="jobs_run_triggered">ジョブを実行しました。</string>
+    <string name="jobs_action_failed">操作に失敗しました。引っ張って更新してください。</string>
+    <string name="jobs_delete_title">ジョブを削除しますか？</string>
+    <string name="jobs_delete_message">「%1$s」はインスタンスのスケジュールから完全に削除されます。</string>
+    <string name="jobs_delete_confirm">削除</string>
+    <string name="jobs_create_confirm">作成</string>
+    <string name="jobs_field_name">名前</string>
+    <string name="jobs_field_schedule">スケジュール</string>
+    <string name="jobs_field_schedule_hint">例: every 2h、0 9 * * *、30m</string>
+    <string name="jobs_field_prompt">プロンプト</string>
+    <string name="jobs_state_scheduled">予約済み</string>
+    <string name="jobs_state_paused">一時停止中</string>
+    <string name="jobs_state_completed">完了</string>
+    <string name="jobs_state_error">エラー</string>
+    <string name="jobs_state_unknown">不明</string>
+
+    <!-- ============================ 設定画面 ============================ -->
+    <string name="settings_title">設定</string>
+    <string name="settings_connection_header">接続</string>
+    <string name="settings_connection_subtitle">実行中の Hermes Agent API サーバーにアプリを接続します。</string>
+
+    <string name="settings_host_label">ホストまたは URL</string>
+    <string name="settings_host_placeholder">192.168.1.10 または https://my-host</string>
+    <string name="settings_host_supporting">IP、ホスト名、または完全な URL。スキームを省略すると http:// が使われます。</string>
+
+    <string name="settings_port_label">ポート</string>
+    <string name="settings_port_placeholder">8642</string>
+    <string name="settings_port_supporting">Hermes API サーバーのデフォルトポートは 8642 です。URL にポートが含まれている場合は空欄にしてください。</string>
+
+    <string name="settings_token_label">API トークン</string>
+    <string name="settings_token_placeholder">API_SERVER_KEY の値</string>
+    <string name="settings_token_supporting">Bearer トークンとして送信されます。この端末に暗号化して保存され、ログには記録されません。</string>
+    <string name="settings_token_show">トークンを表示</string>
+    <string name="settings_token_hide">トークンを非表示</string>
+
+    <string name="settings_save">保存</string>
+    <string name="settings_saved">設定を保存しました</string>
+    <string name="settings_clear">保存した接続を削除</string>
+    <string name="settings_profile_label">プロファイル（任意）</string>
+    <string name="settings_profile_placeholder">default</string>
+    <string name="settings_profile_supporting">デフォルトプロファイルの場合は空欄にします。名前を入力すると /p/&lt;名前&gt;/ のマルチプレックスプロファイル経由で接続します。</string>
+    <string name="settings_error_profile_invalid">使用できるのは英数字、ドット、ハイフン、アンダースコアのみです。</string>
+    <string name="settings_cert_pins_label">証明書ピン（任意）</string>
+    <string name="settings_cert_pins_placeholder">sha256/AAAA…（1 行に 1 つ）</string>
+    <string name="settings_cert_pins_supporting">任意。このサーバーの HTTPS 証明書をピン留めして、偽造された証明書を拒否します。下の「現在の証明書をピン留め」で取得するか、sha256/ の SPKI ピンを貼り付けてください（1 行に 1 つ）。通常の TLS の場合は空欄にします。https のみに適用され、cleartext の LAN には適用されません。</string>
+    <string name="settings_error_cert_pins_invalid">各ピンは sha256/ に続けて 44 文字の base64 値である必要があります。</string>
+    <string name="settings_cert_capture">現在の証明書をピン留め</string>
+    <string name="settings_cert_capturing">証明書を取得中…</string>
+    <string name="settings_cert_capture_ok">このサーバーの証明書ピンを取得しました。内容を確認してから、保存してピン留めを有効にしてください。</string>
+    <string name="settings_cert_capture_dup">その証明書はすでにピン留めされています。</string>
+    <string name="settings_cert_capture_not_https">ピン留めには https エンドポイントが必要です。先にホストを https:// に設定してください。</string>
+    <string name="settings_cert_capture_bad_url">証明書を取得する前に、有効なホストとポートを入力してください。</string>
+    <string name="settings_cert_capture_failed">サーバーに到達できないか、証明書を検証できませんでした。エンドポイントを確認して、もう一度お試しください。</string>
+    <!-- Appearance -->
+    <string name="appearance_header">外観</string>
+    <string name="appearance_theme_mode">テーマ</string>
+    <string name="appearance_theme_system">システム</string>
+    <string name="appearance_theme_light">ライト</string>
+    <string name="appearance_theme_dark">ダーク</string>
+    <string name="appearance_dynamic_color">ダイナミックカラー</string>
+    <string name="appearance_dynamic_color_sub">Android 12 以降で壁紙のパレットを使用します。オフのときは下のアクセントが使われます。</string>
+    <string name="appearance_pure_black">真っ黒（OLED）</string>
+    <string name="appearance_pure_black_sub">ダークモードで背景を黒にして、OLED 画面の消費電力を抑えます。</string>
+    <string name="appearance_accent">アクセント</string>
+    <string name="appearance_accent_sub">ダイナミックカラーがオフ、または利用できないときに適用されます。</string>
+    <string name="appearance_font">フォント</string>
+    <string name="appearance_font_system">システム</string>
+    <string name="appearance_font_serif">セリフ</string>
+    <string name="appearance_font_mono">等幅</string>
+    <string name="appearance_ui_scale">表示サイズ</string>
+    <string name="appearance_scale_compact">コンパクト</string>
+    <string name="appearance_scale_default">標準</string>
+    <string name="appearance_scale_comfortable">ゆったり</string>
+    <string name="appearance_scale_large">大きい</string>
+    <string name="appearance_corners">角</string>
+    <string name="appearance_corners_sharp">シャープ</string>
+    <string name="appearance_corners_rounded">丸み</string>
+    <string name="appearance_corners_extra">さらに丸く</string>
+    <string name="settings_cleared">接続を削除しました</string>
+
+    <string name="settings_resolved_endpoint">解決されたエンドポイント: %1$s</string>
+    <string name="settings_cleartext_title">安全でない接続</string>
+    <string name="settings_cleartext_body">このアドレスは、ローカルネットワーク外のホストへ平文の http:// を使用します。この API トークンはターミナルコマンドを実行できるエンドポイントを保護しており、この端末とそのホストの間にいる者はだれでもトークンを読み取れる可能性があります。それでも続行しますか？</string>
+    <string name="settings_cleartext_confirm">そのまま保存</string>
+    <string name="settings_cleartext_cancel">キャンセル</string>
+    <string name="settings_error_token_required">API トークンを入力してください。</string>
+    <string name="settings_error_port_invalid">ポートは 1 〜 65535 の数値である必要があります。</string>
+    <string name="settings_error_host_invalid">有効なホストまたは URL ではないようです。</string>
+
+    <!-- ============================ チャット画面 ============================ -->
+    <string name="chat_title">チャット</string>
+    <string name="chat_input_hint">エージェントにメッセージ…</string>
+    <string name="chat_empty_title">メッセージはまだありません</string>
+    <string name="chat_empty_subtitle">メッセージを送って、Hermes Agent インスタンスとの会話を始めましょう。</string>
+    <string name="chat_sender_you">あなた</string>
+    <string name="chat_sender_agent">エージェント</string>
+    <string name="chat_thinking">エージェントが考えています…</string>
+    <string name="chat_reasoning">推論中…</string>
+    <string name="chat_reasoning_show">推論を表示</string>
+    <string name="chat_reasoning_hide">推論を非表示</string>
+    <string name="chat_error_prefix">エラー: %1$s</string>
+    <string name="chat_clear_history">会話をクリア</string>
+
+    <!-- Gate shown when host/token are not configured yet -->
+    <string name="chat_locked_title">接続が必要です</string>
+    <string name="chat_locked_subtitle">チャットを始める前に、設定でホストと API トークンを追加してください。</string>
+    <string name="chat_locked_action">設定を開く</string>
+
+    <!-- ============================ ステータス画面 ============================ -->
+    <string name="status_title">ステータス</string>
+    <string name="status_locked_title">接続が必要です</string>
+    <string name="status_locked_subtitle">インスタンスのステータスを見るには、設定でホストと API トークンを追加してください。</string>
+    <string name="status_locked_action">設定を開く</string>
+
+    <string name="status_loading">インスタンスを確認中…</string>
+    <string name="status_reachable">到達可能</string>
+    <string name="status_unreachable">到達不可</string>
+
+    <string name="status_field_state">ゲートウェイの状態</string>
+    <string name="status_field_readiness">準備状況</string>
+    <string name="status_field_busy">ビジー</string>
+    <string name="status_field_active_agents">アクティブなエージェント</string>
+    <string name="status_field_active_runs">アクティブなラン</string>
+    <string name="status_field_subagents">実行中のサブエージェント</string>
+    <string name="status_field_model">モデル</string>
+    <string name="status_field_version">バージョン</string>
+    <string name="status_field_platforms">接続中のプラットフォーム</string>
+    <string name="status_field_updated">更新日時</string>
+
+    <!-- Capabilities card (feature detection from /v1/capabilities) -->
+    <string name="caps_title">インスタンスの機能</string>
+    <string name="caps_unknown">このインスタンスは機能を報告しません（古いゲートウェイ）。保守的なデフォルトを表示しています。</string>
+    <string name="caps_run_control">ラン制御（submit/stop/events）</string>
+    <string name="caps_run_steer">実行中のターンを誘導</string>
+    <string name="caps_run_approval">ツール呼び出しを承認</string>
+    <string name="caps_sessions">永続セッション</string>
+    <string name="caps_session_fork">セッションのフォーク</string>
+    <string name="caps_model_lock">セッションごとのモデル固定</string>
+    <string name="caps_skills">Skills API</string>
+    <string name="caps_artifacts">アーティファクト（アップロード/ダウンロード）</string>
+
+    <string name="status_value_yes">はい</string>
+    <string name="status_value_no">いいえ</string>
+    <string name="status_value_unknown">不明</string>
+    <string name="status_value_none">なし</string>
+
+    <string name="status_error_prefix">インスタンスに到達できませんでした: %1$s</string>
+
+    <!-- ============================ 共通 / エラー ============================ -->
+    <string name="error_no_connection">接続が設定されていません。設定を確認してください。</string>
+    <string name="error_network">ネットワークエラー。ホスト、ポート、ゲートウェイが稼働中かを確認してください。</string>
+    <string name="error_auth">認証に失敗しました。API トークンを確認してください。</string>
+    <string name="error_timeout">リクエストがタイムアウトしました。</string>
+    <string name="error_server">インスタンスでサーバー側のエラーが発生しました。これはアプリではなくインスタンス側の問題です。ゲートウェイのログを確認してください。</string>
+    <string name="error_unexpected">予期しないエラー。</string>
+    <string name="action_dismiss">閉じる</string>
+    <string name="action_retry">再試行</string>
+
+    <!-- Agent status strip (floats above the chat input) -->
+    <string name="status_strip_agent">エージェント %1$s</string>
+    <string name="status_strip_session">セッション %1$s</string>
+    <string name="status_strip_tokens">約 %1$s トークン</string>
+    <string name="status_strip_subagents">サブエージェント %1$d 件</string>
+
+    <!-- Content descriptions (accessibility) -->
+    <string name="cd_send_message">メッセージを送信</string>
+    <string name="cd_refresh_status">ステータスを更新</string>
+
+</resources>

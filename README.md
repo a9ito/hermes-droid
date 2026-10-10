@@ -129,7 +129,7 @@ the host (same Wi-Fi / tunnel up).
 - Retrofit + OkHttp + kotlinx.serialization for REST; OkHttp for SSE streaming.
 - Pure, Android-free `core/` + `dto/` (state reducers, SSE parsers, DTO mappers)
   covered by JVM unit tests; UI/ViewModels/crypto verified in CI.
-- English + Indonesian localization; adding a locale is "add one file."
+- English, Indonesian, and Japanese localization; adding a locale is "add one file."
 - Security-hardened as a token-holding client: cleartext-to-public-host gate,
   bounded SSE reads, Trojan-Source neutralization on the approval surface,
   `FLAG_SECURE` + autofill/tapjacking guards, EXIF-GPS stripping on attachments,
