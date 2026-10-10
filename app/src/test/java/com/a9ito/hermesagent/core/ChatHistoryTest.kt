@@ -141,4 +141,31 @@ class ChatHistoryTest {
         val h = ChatHistory().appendFinalWithReasoning("answer", "   ")
         assertNull(h.messages.single().reasoning)
     }
+
+    @Test fun finishStreamingFinishesTheStreamingAssistant() {
+        val (h0, id) = ChatHistory().startTurn("q")
+        val h1 = h0.appendDelta(id, "partial").finishStreaming()
+        val msg = h1.messages.first { it.id == id }
+        assertFalse(msg.streaming)
+        assertEquals("partial", msg.text)
+    }
+
+    @Test fun finishStreamingIsNoOpWhenNothingStreaming() {
+        // A completed turn (already finished) must be returned unchanged.
+        val (h0, id) = ChatHistory().startTurn("q")
+        val finished = h0.finish(id)
+        assertEquals(finished, finished.finishStreaming())
+    }
+
+    @Test fun finishStreamingTargetsTheLastStreamingMessage() {
+        // Two turns: finish the first, start a second; finishStreaming must settle
+        // only the still-streaming (second) assistant, not re-touch the first.
+        val (h0, id1) = ChatHistory().startTurn("one")
+        val h1 = h0.appendDelta(id1, "a").finish(id1)
+        val (h2, id2) = h1.startTurn("two")
+        val h3 = h2.appendDelta(id2, "b").finishStreaming()
+        assertFalse(h3.messages.first { it.id == id1 }.streaming)
+        assertFalse(h3.messages.first { it.id == id2 }.streaming)
+        assertEquals("b", h3.messages.first { it.id == id2 }.text)
+    }
 }

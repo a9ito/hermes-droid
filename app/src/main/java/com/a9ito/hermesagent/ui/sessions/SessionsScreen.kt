@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.SessionSummary
 import com.a9ito.hermesagent.ui.common.ConnectionGate
 import com.a9ito.hermesagent.ui.common.ModelPickerDialog
@@ -311,7 +312,7 @@ private fun NewSessionDialog(
     var systemPrompt by rememberSaveable { mutableStateOf("") }
     var model by rememberSaveable { mutableStateOf<String?>(null) }
     var showModelPicker by rememberSaveable { mutableStateOf(false) }
-    val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+    val hasPicker = ModelOptions.hasPicker(state.modelOptions, state.availableModels)
 
     if (showModelPicker) {
         // Opening the picker triggers a fresh, tier-settling fetch (refresh=true):

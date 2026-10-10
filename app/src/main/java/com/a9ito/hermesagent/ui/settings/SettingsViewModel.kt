@@ -14,6 +14,7 @@ import com.a9ito.hermesagent.data.remote.CertificateProbe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -61,24 +62,24 @@ class SettingsViewModel(
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     init {
-        // Prefill the form from any saved connection. The token is decrypted only
-        // into the in-memory form field; it is never logged.
+        // Prefill the form ONCE from any saved connection, then stop: a perpetual
+        // collect would re-decrypt the token on every later settings change only to
+        // discard it (the `loaded` guard). first() captures the current value and
+        // completes. The token is decrypted only into the in-memory form field; it
+        // is never logged.
         viewModelScope.launch {
-            settings.connectionFlow.collect { config ->
-                if (!_state.value.loaded) {
-                    val (host, port) = splitBaseUrl(config.baseUrl)
-                    _state.update {
-                        it.copy(
-                            host = host,
-                            port = port,
-                            token = config.token,
-                            profile = if (config.profile == ProfileRoute.DEFAULT) "" else config.profile,
-                            certPins = config.certPins.joinToString("\n"),
-                            resolvedEndpoint = config.baseUrl.ifBlank { null },
-                            loaded = true,
-                        )
-                    }
-                }
+            val config = settings.connectionFlow.first()
+            val (host, port) = splitBaseUrl(config.baseUrl)
+            _state.update {
+                it.copy(
+                    host = host,
+                    port = port,
+                    token = config.token,
+                    profile = if (config.profile == ProfileRoute.DEFAULT) "" else config.profile,
+                    certPins = config.certPins.joinToString("\n"),
+                    resolvedEndpoint = config.baseUrl.ifBlank { null },
+                    loaded = true,
+                )
             }
         }
     }

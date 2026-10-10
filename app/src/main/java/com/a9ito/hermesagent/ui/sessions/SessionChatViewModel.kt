@@ -71,12 +71,16 @@ class SessionChatViewModel(
                 val firstConfigured = c.isComplete && !config.isComplete
                 config = c
                 _state.update { it.copy(configured = c.isComplete) }
-                if (firstConfigured) loadHistory()
+                if (firstConfigured) {
+                    loadMessages()
+                    loadMetadata()
+                }
             }
         }
     }
 
-    private fun loadHistory() {
+    /** Load only the transcript (depends on [includeCompacted]); re-run on toggle. */
+    private fun loadMessages() {
         if (!config.isComplete) return
         _state.update { it.copy(loadingHistory = true) }
         val includeCompacted = _state.value.includeCompacted
@@ -88,8 +92,16 @@ class SessionChatViewModel(
                     _state.update { it.copy(loadingHistory = false, errorKind = res.kind) }
             }
         }
-        // Session model + instance model list feed the per-session picker; failures
-        // are non-fatal (picker just stays empty), so they don't touch errorKind.
+    }
+
+    /**
+     * Load the session's locked model + the instance model catalog for the
+     * picker. Independent of [includeCompacted], so this runs once at
+     * first-configure and NOT on every compacted toggle. Failures are non-fatal
+     * (picker just stays empty), so they don't touch errorKind.
+     */
+    private fun loadMetadata() {
+        if (!config.isComplete) return
         viewModelScope.launch {
             (repository.sessionDetail(config, sessionId) as? ApiResult.Success)?.let { res ->
                 _state.update { it.copy(model = res.data.model) }
@@ -159,7 +171,9 @@ class SessionChatViewModel(
     fun setIncludeCompacted(enabled: Boolean) {
         if (_state.value.includeCompacted == enabled || _state.value.sending) return
         _state.update { it.copy(includeCompacted = enabled) }
-        loadHistory()
+        // Only the transcript depends on this flag; don't re-fetch session detail
+        // or the whole model catalog on every toggle.
+        loadMessages()
     }
 
     /** Stage an image for the next turn (dedup + cap enforced). */
@@ -216,7 +230,10 @@ class SessionChatViewModel(
                 _state.update { it.copy(history = it.history.finish(assistantId), sending = false) }
             } catch (t: Throwable) {
                 if (t is CancellationException) throw t
-                val kind = repository.classify(t)
+                // A server-reported error frame (SessionStreamFailure) is the instance's
+                // failure, not a client/transport one: classify it as SERVER_ERROR instead
+                // of letting the generic classifier fall through to UNEXPECTED.
+                val kind = if (t is SessionStreamFailure) ErrorKind.SERVER_ERROR else repository.classify(t)
                 _state.update {
                     it.copy(history = it.history.fail(assistantId, kind), sending = false, errorKind = kind)
                 }
@@ -227,11 +244,7 @@ class SessionChatViewModel(
     fun stop() {
         streamJob?.cancel()
         streamJob = null
-        _state.update { st ->
-            val lastAssistant = st.history.messages.lastOrNull { it.role == ChatMessage.Role.ASSISTANT && it.streaming }
-            val h = if (lastAssistant != null) st.history.finish(lastAssistant.id) else st.history
-            st.copy(history = h, sending = false)
-        }
+        _state.update { it.copy(history = it.history.finishStreaming(), sending = false) }
     }
 
     /** A server-reported error frame carried out of the stream collector. */

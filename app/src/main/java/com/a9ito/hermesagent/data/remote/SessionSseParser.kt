@@ -1,10 +1,9 @@
 package com.a9ito.hermesagent.data.remote
 
 import com.a9ito.hermesagent.core.SafeText
+import com.a9ito.hermesagent.core.stringOrEmpty
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 
 /**
  * One decoded event from POST /api/sessions/{id}/chat/stream. Only the frames
@@ -69,20 +68,19 @@ class SessionSseParser(
         // Unparseable data for a real event must not crash or emit a phantom
         // empty delta — degrade to Ignored. Valid-but-empty ({}) still decodes.
         if (obj == null) return SessionStreamEvent.Ignored
-        fun str(key: String): String = (obj[key] as? JsonPrimitive)?.contentOrNull ?: ""
         return when (name) {
-            "assistant.delta" -> SessionStreamEvent.Delta(str("delta"))
-            "assistant.completed" -> SessionStreamEvent.Completed(str("content"))
-            "assistant.commentary" -> str("text").let {
+            "assistant.delta" -> SessionStreamEvent.Delta(obj.stringOrEmpty("delta"))
+            "assistant.completed" -> SessionStreamEvent.Completed(obj.stringOrEmpty("content"))
+            "assistant.commentary" -> obj.stringOrEmpty("text").let {
                 if (it.isEmpty()) SessionStreamEvent.Ignored else SessionStreamEvent.Commentary(it)
             }
             // Server folds reasoning.available into a tool.progress frame; the app
             // treats any tool.progress as "the agent is thinking".
             "tool.progress" -> SessionStreamEvent.Thinking
-            "tool.started" -> SessionStreamEvent.ToolStarted(SafeText.forControlDisplay(str("tool_name")) ?: "")
-            "tool.completed" -> SessionStreamEvent.ToolCompleted(SafeText.forControlDisplay(str("tool_name")) ?: "")
-            "tool.failed" -> SessionStreamEvent.ToolFailed(SafeText.forControlDisplay(str("tool_name")) ?: "")
-            "error" -> SessionStreamEvent.Failed(str("message"))
+            "tool.started" -> SessionStreamEvent.ToolStarted(SafeText.forControlDisplay(obj.stringOrEmpty("tool_name")) ?: "")
+            "tool.completed" -> SessionStreamEvent.ToolCompleted(SafeText.forControlDisplay(obj.stringOrEmpty("tool_name")) ?: "")
+            "tool.failed" -> SessionStreamEvent.ToolFailed(SafeText.forControlDisplay(obj.stringOrEmpty("tool_name")) ?: "")
+            "error" -> SessionStreamEvent.Failed(obj.stringOrEmpty("message"))
             "done" -> SessionStreamEvent.Done
             else -> SessionStreamEvent.Ignored
         }

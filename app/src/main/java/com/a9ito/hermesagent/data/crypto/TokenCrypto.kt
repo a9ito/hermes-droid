@@ -23,6 +23,14 @@ import javax.crypto.spec.GCMParameterSpec
  */
 class TokenCrypto {
 
+    // The AndroidKeyStore entry is immutable for the app's lifetime, but loading
+    // it (KeyStore.getInstance().load(null) + getEntry) on every encrypt/decrypt
+    // means a keystore round-trip per connectionFlow emission per collector. Cache
+    // the resolved key after first use; a key invalidated by a lock-screen change
+    // still throws on use and is caught below (fail-closed to "re-enter token").
+    @Volatile
+    private var cachedKey: SecretKey? = null
+
     /** Encrypt [plaintext]; returns Base64(iv|ciphertext). */
     fun encrypt(plaintext: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -55,8 +63,12 @@ class TokenCrypto {
     }
 
     private fun getOrCreateKey(): SecretKey {
+        cachedKey?.let { return it }
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-        (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }
+        (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.let {
+            cachedKey = it.secretKey
+            return it.secretKey
+        }
 
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val spec = KeyGenParameterSpec.Builder(
@@ -71,7 +83,7 @@ class TokenCrypto {
             .setRandomizedEncryptionRequired(true)
             .build()
         keyGenerator.init(spec)
-        return keyGenerator.generateKey()
+        return keyGenerator.generateKey().also { cachedKey = it }
     }
 
     companion object {

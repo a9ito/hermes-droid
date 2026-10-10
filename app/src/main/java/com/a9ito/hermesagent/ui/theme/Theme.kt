@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import com.a9ito.hermesagent.core.AccentPreset
 import com.a9ito.hermesagent.core.AppearancePrefs
 
 /**

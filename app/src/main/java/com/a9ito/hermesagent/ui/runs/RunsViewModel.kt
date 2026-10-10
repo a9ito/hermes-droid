@@ -76,6 +76,19 @@ class RunsViewModel(
 
     private var config: ConnectionConfig = ConnectionConfig.EMPTY
     private var streamJob: Job? = null
+    /** Set once a Terminal event is applied, so a clean stream end skips the reconcile poll. */
+    private var terminalApplied = false
+
+    private companion object {
+        /** Keep the live tool/commentary log bounded; a long run can emit thousands of lines. */
+        const val MAX_LOG_LINES = 500
+        /**
+         * Clamp the accumulated answer/reasoning buffers. The per-line SSE cap
+         * (SseLineReader, 16 MiB) bounds ONE frame; this bounds the SUM so a long
+         * or hostile stream cannot grow the buffer without limit and OOM the app.
+         */
+        const val MAX_STREAM_TEXT = 2 * 1024 * 1024 // 2 MB of accumulated text
+    }
 
     init {
         viewModelScope.launch {
@@ -148,6 +161,7 @@ class RunsViewModel(
         _state.update {
             it.copy(submitting = true, errorKind = null, answer = "", reasoning = "", log = emptyList(), approval = null)
         }
+        terminalApplied = false
         viewModelScope.launch {
             when (val res = repository.createRun(config, text, model = _state.value.model)) {
                 is ApiResult.Success -> {
@@ -168,14 +182,16 @@ class RunsViewModel(
             } catch (_: Throwable) {
                 // Stream dropped (keepalive gap, network). Reconcile via a poll below.
             }
-            // Stream ended: poll once so a missed terminal event still settles the UI.
-            reconcile(runId)
+            // Only poll to reconcile when the stream ended WITHOUT a terminal event
+            // (dropped/keepalive gap). A clean terminal close already settled the UI,
+            // so the extra getRun() would be a redundant request on every completion.
+            if (!terminalApplied) reconcile(runId)
         }
     }
 
     private fun apply(ev: RunStreamEvent) {
         when (ev) {
-            is RunStreamEvent.Delta -> _state.update { it.copy(answer = it.answer + ev.text) }
+            is RunStreamEvent.Delta -> _state.update { it.copy(answer = clampText(it.answer + ev.text)) }
             is RunStreamEvent.Interim -> addLog(RunLogLine.Kind.INTERIM, ev.text)
             // Accumulate reasoning into one buffer for the collapsible panel, mirroring
             // the session chat's per-turn thinking (not interleaved into the tool log).
@@ -184,7 +200,7 @@ class RunsViewModel(
             is RunStreamEvent.Reasoning ->
                 if (ev.text.isNotBlank()) _state.update {
                     val sep = if (it.reasoning.isEmpty()) "" else "\n\n"
-                    it.copy(reasoning = it.reasoning + sep + ev.text.trim())
+                    it.copy(reasoning = clampText(it.reasoning + sep + ev.text.trim()))
                 }
             is RunStreamEvent.ToolStarted ->
                 addLog(RunLogLine.Kind.TOOL_START, ev.preview?.let { "${ev.tool}: $it" } ?: ev.tool)
@@ -197,16 +213,19 @@ class RunsViewModel(
                         run = it.run?.copy(status = AgentRun.Status.WAITING_FOR_APPROVAL),
                     )
                 }
-            is RunStreamEvent.Terminal -> _state.update {
-                it.copy(
-                    run = it.run?.copy(
-                        status = AgentRun.Status.fromWire(ev.status),
-                        output = ev.output ?: it.run.output,
-                        error = ev.error ?: it.run.error,
-                    ),
-                    answer = ev.output?.takeIf { o -> o.isNotEmpty() } ?: it.answer,
-                    approval = null,
-                )
+            is RunStreamEvent.Terminal -> {
+                terminalApplied = true
+                _state.update {
+                    it.copy(
+                        run = it.run?.copy(
+                            status = AgentRun.Status.fromWire(ev.status),
+                            output = ev.output ?: it.run.output,
+                            error = ev.error ?: it.run.error,
+                        ),
+                        answer = ev.output?.takeIf { o -> o.isNotEmpty() }?.let(::clampText) ?: it.answer,
+                        approval = null,
+                    )
+                }
             }
             RunStreamEvent.Done, RunStreamEvent.Ignored -> Unit
         }
@@ -246,8 +265,17 @@ class RunsViewModel(
 
     private fun addLog(kind: RunLogLine.Kind, text: String) {
         if (text.isBlank()) return
-        _state.update { it.copy(log = it.log + RunLogLine(kind, text.trim())) }
+        _state.update {
+            // Bound the live log: keep the most recent MAX_LOG_LINES so a long run
+            // (thousands of tool frames) can't grow the list without limit.
+            val next = it.log + RunLogLine(kind, text.trim())
+            it.copy(log = if (next.size > MAX_LOG_LINES) next.takeLast(MAX_LOG_LINES) else next)
+        }
     }
+
+    /** Clamp an accumulated stream buffer to [MAX_STREAM_TEXT], keeping the tail (newest). */
+    private fun clampText(text: String): String =
+        if (text.length > MAX_STREAM_TEXT) text.takeLast(MAX_STREAM_TEXT) else text
 
     override fun onCleared() {
         streamJob?.cancel()

@@ -35,8 +35,7 @@ enum class ReasoningEffort(val key: String, val wire: String?) {
     ULTRA("ultra", "ultra");
 
     companion object {
-        val DEFAULT_EFFORT = DEFAULT
-        fun fromKey(key: String?): ReasoningEffort = entries.firstOrNull { it.key == key } ?: DEFAULT_EFFORT
+        fun fromKey(key: String?): ReasoningEffort = entries.firstOrNull { it.key == key } ?: DEFAULT
     }
 }
 

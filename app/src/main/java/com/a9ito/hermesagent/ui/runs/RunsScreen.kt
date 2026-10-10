@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.AgentRun
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.ui.common.ConnectionGate
 import com.a9ito.hermesagent.ui.common.ModelPickerDialog
 import com.a9ito.hermesagent.ui.common.ReasoningPanel
@@ -74,7 +75,7 @@ fun RunsScreen(
                 },
                 actions = {
                     if (state.configured && state.capabilities?.supportsRunControl != false) {
-                        val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+                        val hasPicker = ModelOptions.hasPicker(state.modelOptions, state.availableModels)
                         if (hasPicker) {
                             TextButton(onClick = { showModelPicker = true }) {
                                 Text(stringResource(R.string.session_model_pick))

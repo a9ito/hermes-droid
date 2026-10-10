@@ -1,12 +1,15 @@
 package com.a9ito.hermesagent.data.remote
 
+import com.a9ito.hermesagent.core.AgentRun
 import com.a9ito.hermesagent.core.RunApproval
 import com.a9ito.hermesagent.core.SafeText
+import com.a9ito.hermesagent.core.booleanOrFalse
+import com.a9ito.hermesagent.core.stringOrEmpty
+import com.a9ito.hermesagent.core.stringOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 
 /**
@@ -62,24 +65,21 @@ class RunSseParser(
         if (payload == "[DONE]") return RunStreamEvent.Done
         val obj: JsonObject = runCatching { json.parseToJsonElement(payload) as? JsonObject }
             .getOrNull() ?: return RunStreamEvent.Ignored
-        fun str(key: String): String = (obj[key] as? JsonPrimitive)?.contentOrNull ?: ""
-        fun strOrNull(key: String): String? = (obj[key] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotEmpty() }
-        fun bool(key: String): Boolean = (obj[key] as? JsonPrimitive)?.booleanOrNull ?: false
 
-        val name = str("event")
+        val name = obj.stringOrEmpty("event")
         return when {
-            name == "message.delta" -> RunStreamEvent.Delta(str("delta"))
-            name == "message.interim" -> RunStreamEvent.Interim(str("text"))
-            name == "tool.started" -> RunStreamEvent.ToolStarted(SafeText.forControlDisplay(str("tool")) ?: "", SafeText.forControlDisplay(strOrNull("preview")))
-            name == "tool.completed" -> RunStreamEvent.ToolCompleted(SafeText.forControlDisplay(str("tool")) ?: "", bool("error"))
-            name == "reasoning.available" -> RunStreamEvent.Reasoning(str("text"))
+            name == "message.delta" -> RunStreamEvent.Delta(obj.stringOrEmpty("delta"))
+            name == "message.interim" -> RunStreamEvent.Interim(obj.stringOrEmpty("text"))
+            name == "tool.started" -> RunStreamEvent.ToolStarted(SafeText.forControlDisplay(obj.stringOrEmpty("tool")) ?: "", SafeText.forControlDisplay(obj.stringOrNull("preview")))
+            name == "tool.completed" -> RunStreamEvent.ToolCompleted(SafeText.forControlDisplay(obj.stringOrEmpty("tool")) ?: "", obj.booleanOrFalse("error"))
+            name == "reasoning.available" -> RunStreamEvent.Reasoning(obj.stringOrEmpty("text"))
             name == "approval.request" -> RunStreamEvent.ApprovalRequest(parseApproval(obj))
             name.startsWith("run.") -> {
                 val status = name.removePrefix("run.")
-                // Only the settled statuses are terminal; run.stopping/steered/etc. are not.
-                val terminal = status in TERMINAL_STATUSES
-                if (terminal) {
-                    RunStreamEvent.Terminal(status, strOrNull("output"), strOrNull("error"))
+                // Terminal-ness is owned by the AgentRun.Status enum (single source of
+                // truth); run.stopping/steered/etc. are not terminal.
+                if (AgentRun.Status.fromWire(status).isTerminal) {
+                    RunStreamEvent.Terminal(status, obj.stringOrNull("output"), obj.stringOrNull("error"))
                 } else {
                     RunStreamEvent.Ignored
                 }
@@ -92,18 +92,13 @@ class RunSseParser(
         val choices = (obj["choices"] as? JsonArray)
             ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
             ?: listOf("once", "deny")
-        fun s(key: String) = (obj[key] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotEmpty() }
         return RunApproval(
             choices = choices,
             // tool/command are shown at the human approval gate, so neutralize
             // bidi/zero-width/control chars that could disguise what is approved.
-            tool = SafeText.forControlDisplay(s("tool") ?: s("tool_name")),
-            command = SafeText.forControlDisplay(s("command")),
-            requestId = s("request_id"),
+            tool = SafeText.forControlDisplay(obj.stringOrNull("tool") ?: obj.stringOrNull("tool_name")),
+            command = SafeText.forControlDisplay(obj.stringOrNull("command")),
+            requestId = obj.stringOrNull("request_id"),
         )
-    }
-
-    companion object {
-        val TERMINAL_STATUSES = setOf("completed", "failed", "cancelled", "interrupted")
     }
 }

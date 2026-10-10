@@ -3,6 +3,7 @@ package com.a9ito.hermesagent.data
 import com.a9ito.hermesagent.core.AgentRun
 import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.Capabilities
+import com.a9ito.hermesagent.core.CleartextPolicy
 import com.a9ito.hermesagent.core.ConnectionConfig
 import com.a9ito.hermesagent.core.CronJob
 import com.a9ito.hermesagent.core.ErrorKind
@@ -78,6 +79,14 @@ class HermesRepository(
 
     private val tokenRef = AtomicReference("")
 
+    /** One atomically-published networking stack for a given (host, pin-set) key. */
+    private class Clients(
+        val key: String,
+        val base: OkHttpClient,
+        val stream: OkHttpClient,
+        val api: HermesApi,
+    )
+
     // The base + streaming OkHttp clients are rebuilt only when the set of TLS
     // pins changes (rare), and cached by a pins key, mirroring the Retrofit
     // per-base-URL cache below. A CertificatePinner is immutable once built into
@@ -101,63 +110,52 @@ class HermesRepository(
         return builder.build()
     }
 
-    @Volatile private var cachedPinsKey: String = "\u0000uninit"
-    @Volatile private var cachedBaseClient: OkHttpClient? = null
-    @Volatile private var cachedStreamingClient: OkHttpClient? = null
+    // Single atomically-published cache. The whole swap (base + streaming client +
+    // Retrofit api + their key) is one object reference, so a reader never pairs a
+    // client with a mismatched pin-set/host even if two configs race — the previous
+    // triple-@Volatile swap could interleave. @Synchronized serializes the rebuild
+    // and lets us evict the superseded connection pool promptly instead of waiting
+    // for OkHttp's idle timeout.
+    //
+    // SSE streams stay open for a whole agent turn, which legitimately runs for many
+    // minutes while server-side tools execute; the keepalive can starve past any
+    // fixed idle bound, so the streaming client lifts only the idle-read cap
+    // (readTimeout(0)) while connect/write stay to detect a dead socket. It reuses
+    // the base client's connection pool + AuthInterceptor + certificate pinner via
+    // newBuilder().
+    @Volatile private var cachedClients: Clients? = null
 
-    // SSE streams stay open for a whole agent turn, which legitimately runs for
-    // many minutes while server-side tools execute. The server emits a keepalive
-    // roughly every 10s, but under heavy load on the instance (e.g. a phone-hosted
-    // gateway) those can starve past any fixed idle bound — so a readTimeout here
-    // aborts a perfectly healthy turn mid-flight ("request timed out"). Lift only
-    // the idle-read cap for streaming; connect/write stay so a genuinely dead
-    // socket is still detected, and leaving the screen cancels the coroutine. The
-    // streaming client reuses the base client's connection pool + AuthInterceptor
-    // + certificate pinner via newBuilder().
-    private fun clientsFor(config: ConnectionConfig): Pair<OkHttpClient, OkHttpClient> {
+    @Synchronized
+    private fun clientsFor(config: ConnectionConfig): Clients {
+        tokenRef.set(config.token)
+        val base = config.effectiveBaseUrl
         // Key on the host too: a pin set is bound to a specific host, so a base
         // URL change must rebuild the pinner even if the pin strings are the same.
-        val key = com.a9ito.hermesagent.core.CleartextPolicy.hostOf(config.effectiveBaseUrl) +
-            "|" + config.certPins.joinToString(",")
-        val base = cachedBaseClient
-        val stream = cachedStreamingClient
-        if (base != null && stream != null && cachedPinsKey == key) return base to stream
-        val host = com.a9ito.hermesagent.core.CleartextPolicy.hostOf(config.effectiveBaseUrl)
+        val host = CleartextPolicy.hostOf(base)
+        val key = host + "|" + config.certPins.joinToString(",") + "|" + base
+        cachedClients?.let { if (it.key == key) return it }
+
+        val previous = cachedClients
         val newBase = buildBaseClient(config.certPins, host)
         val newStream = newBase.newBuilder().readTimeout(0, TimeUnit.SECONDS).build()
-        cachedBaseClient = newBase
-        cachedStreamingClient = newStream
-        cachedPinsKey = key
-        return newBase to newStream
+        @Suppress("OPT_IN_USAGE")
+        val contentType = "application/json".toMediaType()
+        val api = Retrofit.Builder()
+            .baseUrl(base)
+            .client(newBase)
+            .addConverterFactory(json.asConverterFactory(contentType))
+            .build()
+            .create(HermesApi::class.java)
+        val clients = Clients(key = key, base = newBase, stream = newStream, api = api)
+        cachedClients = clients
+        // Release the superseded stack's sockets/threads now rather than on idle TTL.
+        previous?.base?.connectionPool?.evictAll()
+        return clients
     }
-
-    // Cache one Retrofit per base URL so we don't rebuild on every call.
-    @Volatile private var cachedBaseUrl: String = ""
-    @Volatile private var cachedApi: HermesApi? = null
-    @Volatile private var cachedApiClient: OkHttpClient? = null
 
     val connectionFlow: Flow<ConnectionConfig> = settings.connectionFlow
 
-    private fun apiFor(config: ConnectionConfig): HermesApi {
-        tokenRef.set(config.token)
-        val base = config.effectiveBaseUrl
-        val (baseClient, _) = clientsFor(config)
-        val existing = cachedApi
-        if (existing != null && cachedBaseUrl == base && cachedApiClient === baseClient) return existing
-
-        @Suppress("OPT_IN_USAGE")
-        val contentType = "application/json".toMediaType()
-        val retrofit = Retrofit.Builder()
-            .baseUrl(base)
-            .client(baseClient)
-            .addConverterFactory(json.asConverterFactory(contentType))
-            .build()
-        val api = retrofit.create(HermesApi::class.java)
-        cachedBaseUrl = base
-        cachedApiClient = baseClient
-        cachedApi = api
-        return api
-    }
+    private fun apiFor(config: ConnectionConfig): HermesApi = clientsFor(config).api
 
     /** Combined status from /health/detailed (+ /v1/models for the model id). */
     suspend fun fetchStatus(config: ConnectionConfig): ApiResult<InstanceStatus> {
@@ -228,7 +226,7 @@ class HermesRepository(
         require(config.isComplete)
         tokenRef.set(config.token)
         val payload = ChatCompletionPayload.encode(json, model, history, stream = true, provider = provider, attachments = attachments, modelOptions = modelOptions)
-        val (_, streamingClient) = clientsFor(config)
+        val streamingClient = clientsFor(config).stream
         ChatStreamer(streamingClient, json).stream(config.effectiveBaseUrl, payload).collect { emit(it) }
     }
 
@@ -445,7 +443,7 @@ class HermesRepository(
         require(config.isComplete)
         tokenRef.set(config.token)
         val payload = SessionChatPayload.encode(json, message, attachments, model = null, modelOptions = modelOptions)
-        val (_, streamingClient) = clientsFor(config)
+        val streamingClient = clientsFor(config).stream
         SessionChatStreamer(streamingClient, json).stream(config.effectiveBaseUrl, sessionId, payload).collect { emit(it) }
     }
 
@@ -565,7 +563,7 @@ class HermesRepository(
     fun streamRunEvents(config: ConnectionConfig, runId: String): Flow<RunStreamEvent> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        val (_, streamingClient) = clientsFor(config)
+        val streamingClient = clientsFor(config).stream
         RunEventStreamer(streamingClient, json).stream(config.effectiveBaseUrl, runId).collect { emit(it) }
     }
 
