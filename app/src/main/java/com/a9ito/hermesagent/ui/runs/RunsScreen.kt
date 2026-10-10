@@ -100,6 +100,9 @@ fun RunsScreen(
                 onDismiss = { showModelPicker = false },
             )
         }
+        // Bind delegated state to locals: `state` is a `by` delegate, so its
+        // nullable fields don't smart-cast after a null check (CI compile error).
+        val capsError = state.capabilitiesError
         when {
             state.configLoaded && !state.configured -> ConnectionGate(
                 title = stringResource(R.string.runs_locked_title),
@@ -108,6 +111,22 @@ fun RunsScreen(
                 onAction = onOpenSettings,
                 modifier = Modifier.padding(innerPadding),
             )
+            // The capabilities PROBE failed (auth/network/5xx) — this is NOT the same
+            // as the gateway reporting it lacks run control. Offer retry instead of the
+            // misleading "update your gateway" message, which sent users chasing a
+            // gateway upgrade for what was really a connection/token problem.
+            capsError != null -> Centered(Modifier.padding(innerPadding)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.runs_caps_failed_title), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.runs_caps_failed_subtitle, stringResource(capsError.messageRes())),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    OutlinedButton(onClick = viewModel::retryCapabilities) {
+                        Text(stringResource(R.string.action_retry))
+                    }
+                }
+            }
             // Capabilities resolved AND the instance can't drive runs -> explain, don't offer.
             state.capabilities?.supportsRunControl == false -> Centered(Modifier.padding(innerPadding)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -50,4 +50,17 @@ class JsonExtensionsTest {
         assertFalse(o.booleanOrFalse("n"))
         assertFalse(o.booleanOrFalse("missing"))
     }
+
+    @Test fun longOrZeroReadsNumberElseZero() {
+        val o = obj("""{"n":1000,"big":296915703,"neg":-5,"s":"42","f":1.9,"nul":null}""")
+        assertEquals(1000L, o.longOrZero("n"))
+        assertEquals(296915703L, o.longOrZero("big"))
+        assertEquals(-5L, o.longOrZero("neg"))
+        // A quoted numeric string is still a primitive with longOrNull content.
+        assertEquals(42L, o.longOrZero("s"))
+        // A fractional value has no long form -> 0 (longOrNull is null).
+        assertEquals(0L, o.longOrZero("f"))
+        assertEquals(0L, o.longOrZero("missing"))
+        assertEquals(0L, o.longOrZero("nul"))
+    }
 }

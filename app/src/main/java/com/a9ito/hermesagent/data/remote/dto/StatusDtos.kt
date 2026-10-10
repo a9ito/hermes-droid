@@ -27,6 +27,25 @@ data class HealthDetailedDto(
 @Serializable
 data class ReadinessDto(
     val status: String? = null,
+    val checks: ReadinessChecksDto? = null,
+)
+
+/** Subset of readiness.checks the app reads — only the live background queues. */
+@Serializable
+data class ReadinessChecksDto(
+    @SerialName("background_queues") val backgroundQueues: BackgroundQueuesDto? = null,
+)
+
+/**
+ * readiness.checks.background_queues — live gateway-wide work counters.
+ * ``active_delegations`` is the number of subagents running across the whole
+ * gateway (not scoped to one session); ``active_api_runs`` are durable runs in
+ * flight. Confirmed against api_server.py health payload.
+ */
+@Serializable
+data class BackgroundQueuesDto(
+    @SerialName("active_api_runs") val activeApiRuns: Int? = null,
+    @SerialName("active_delegations") val activeDelegations: Int? = null,
 )
 
 /** GET /v1/models — OpenAI-compatible model list. */

@@ -37,6 +37,17 @@ class SessionMapperTest {
         assertTrue(dto.toSummary().isFork)
     }
 
+    @Test fun summaryCarriesStartedAtAndLifetimeTokens() {
+        val dto = SessionDto(
+            id = "s1", title = "t", startedAt = 1790861103.0,
+            inputTokens = 296_915_703L, outputTokens = 816_884L,
+        )
+        val s = dto.toSummary()
+        assertEquals(1790861103.0, s.startedAt!!, 0.001)
+        // Lifetime total = input + output (cumulative across the session, NOT context size).
+        assertEquals(296_915_703L + 816_884L, s.totalTokens)
+    }
+
     @Test fun plainStringContentExtracted() {
         val el = json.parseToJsonElement(""""just text"""")
         assertEquals("just text", extractMessageText(el))

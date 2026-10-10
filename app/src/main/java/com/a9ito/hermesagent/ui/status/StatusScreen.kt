@@ -162,6 +162,8 @@ private fun StatusCard(status: InstanceStatus) {
                 when (status.busy) { true -> yes; false -> no; null -> unknown },
             )
             StatusRow(stringResource(R.string.status_field_active_agents), status.activeAgents?.toString() ?: unknown)
+            status.activeApiRuns?.let { StatusRow(stringResource(R.string.status_field_active_runs), it.toString()) }
+            status.activeDelegations?.let { StatusRow(stringResource(R.string.status_field_subagents), it.toString()) }
             StatusRow(stringResource(R.string.status_field_model), status.model ?: unknown)
             StatusRow(stringResource(R.string.status_field_version), status.version ?: unknown)
             StatusRow(

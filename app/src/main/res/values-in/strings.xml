@@ -120,6 +120,8 @@
     <string name="runs_locked_subtitle">Tambahkan host dan token API di Pengaturan untuk memulai agent run.</string>
     <string name="runs_unsupported_title">Run tidak didukung</string>
     <string name="runs_unsupported_subtitle">Instance ini tidak menyediakan API kontrol run (submit/stop/events). Perbarui gateway untuk memakai layar ini.</string>
+    <string name="runs_caps_failed_title">Nggak bisa cek instance ini</string>
+    <string name="runs_caps_failed_subtitle">Gagal membaca kemampuan instance ini: %1$s. Biasanya ini masalah koneksi atau token, bukan fitur yang nggak ada. Cek Status, lalu coba lagi.</string>
     <string name="runs_error_prefix">Run gagal: %1$s</string>
     <string name="runs_activity">Aktivitas</string>
     <string name="runs_stop">Hentikan</string>
@@ -276,6 +278,8 @@
     <string name="status_field_readiness">Kesiapan</string>
     <string name="status_field_busy">Sibuk</string>
     <string name="status_field_active_agents">Agen aktif</string>
+    <string name="status_field_active_runs">Run aktif</string>
+    <string name="status_field_subagents">Subagent berjalan</string>
     <string name="status_field_model">Model</string>
     <string name="status_field_version">Versi</string>
     <string name="status_field_platforms">Platform terhubung</string>
@@ -308,6 +312,13 @@
     <string name="error_server">Instance mengalami kesalahan sisi server. Ini masalah di instance, bukan di aplikasi. Cek log gateway.</string>
     <string name="error_unexpected">Kesalahan tak terduga.</string>
     <string name="action_dismiss">Tutup</string>
+    <string name="action_retry">Coba lagi</string>
+
+    <!-- Strip status agent (melayang di atas input chat) -->
+    <string name="status_strip_agent">Agent %1$s</string>
+    <string name="status_strip_session">Sesi %1$s</string>
+    <string name="status_strip_tokens">~%1$s tok</string>
+    <string name="status_strip_subagents">%1$d subagent</string>
 
     <!-- Deskripsi konten (aksesibilitas) -->
     <string name="cd_send_message">Kirim pesan</string>

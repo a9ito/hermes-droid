@@ -18,10 +18,12 @@ import com.a9ito.hermesagent.data.HermesRepository
 import com.a9ito.hermesagent.data.remote.SessionStreamEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 data class SessionChatUiState(
@@ -46,7 +48,26 @@ data class SessionChatUiState(
     val includeCompacted: Boolean = false,
     /** Per-turn reasoning effort + fast-mode controls. */
     val reasoning: ReasoningPref = ReasoningPref.DEFAULT,
-)
+    /** Epoch seconds this session was created, for the status-bar session-age readout. */
+    val sessionStartedAt: Double? = null,
+    /** Wall-clock ms when the current turn started streaming; null when idle. */
+    val turnStartedAtMs: Long? = null,
+    /**
+     * Total tokens the model processed on the most recent completed turn
+     * (prompt+completion). The API server exposes no context-window size, so
+     * this is a raw count, shown as "~N tok", never a percentage.
+     */
+    val lastTurnTokens: Long = 0,
+    /**
+     * Subagents running gateway-wide (health/detailed active_delegations),
+     * polled only while a turn is active. Not scoped to this session, so it is
+     * labeled as a gateway-wide count.
+     */
+    val subagents: Int = 0,
+) {
+    /** True while a turn is actively streaming (drives the live agent timer). */
+    val agentRunning: Boolean get() = sending && turnStartedAtMs != null
+}
 
 /**
  * Chat against ONE persisted server session. Unlike the legacy [ChatViewModel],
@@ -64,6 +85,8 @@ class SessionChatViewModel(
 
     private var config: ConnectionConfig = ConnectionConfig.EMPTY
     private var streamJob: Job? = null
+    /** Polls gateway-wide subagent count while a turn is active; cancelled when it ends. */
+    private var subagentPollJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -104,7 +127,7 @@ class SessionChatViewModel(
         if (!config.isComplete) return
         viewModelScope.launch {
             (repository.sessionDetail(config, sessionId) as? ApiResult.Success)?.let { res ->
-                _state.update { it.copy(model = res.data.model) }
+                _state.update { it.copy(model = res.data.model, sessionStartedAt = res.data.startedAt) }
             }
         }
         // Prefer the rich /api/model/options catalog; fall back to the flat /v1/models
@@ -197,10 +220,14 @@ class SessionChatViewModel(
         }
         val (newHistory, assistantId) = _state.value.history.startTurn(text, attachmentCount = attachments.size)
         _state.update {
-            it.copy(history = newHistory, input = "", pendingAttachments = emptyList(), sending = true, errorKind = null)
+            it.copy(
+                history = newHistory, input = "", pendingAttachments = emptyList(),
+                sending = true, errorKind = null, turnStartedAtMs = System.currentTimeMillis(),
+            )
         }
 
         streamJob = viewModelScope.launch {
+            startSubagentPoll()
             try {
                 repository.streamSessionChat(config, sessionId, text, attachments, modelOptions = _state.value.reasoning.toModelOptions()).collect { event ->
                     when (event) {
@@ -222,12 +249,15 @@ class SessionChatViewModel(
                             _state.update { it.copy(history = it.history.toolFinished(assistantId, event.toolName, ToolActivity.Status.FAILED)) }
                         is SessionStreamEvent.Commentary ->
                             _state.update { it.copy(history = it.history.appendCommentary(assistantId, event.text)) }
+                        is SessionStreamEvent.Usage ->
+                            // Terminal per-turn token count for the status bar (raw, not a %).
+                            _state.update { it.copy(lastTurnTokens = event.totalTokens) }
                         is SessionStreamEvent.Failed ->
                             throw SessionStreamFailure(event.message)
                         SessionStreamEvent.Done, SessionStreamEvent.Ignored -> Unit
                     }
                 }
-                _state.update { it.copy(history = it.history.finish(assistantId), sending = false) }
+                _state.update { it.copy(history = it.history.finish(assistantId), sending = false, turnStartedAtMs = null) }
             } catch (t: Throwable) {
                 if (t is CancellationException) throw t
                 // A server-reported error frame (SessionStreamFailure) is the instance's
@@ -235,8 +265,10 @@ class SessionChatViewModel(
                 // of letting the generic classifier fall through to UNEXPECTED.
                 val kind = if (t is SessionStreamFailure) ErrorKind.SERVER_ERROR else repository.classify(t)
                 _state.update {
-                    it.copy(history = it.history.fail(assistantId, kind), sending = false, errorKind = kind)
+                    it.copy(history = it.history.fail(assistantId, kind), sending = false, errorKind = kind, turnStartedAtMs = null)
                 }
+            } finally {
+                stopSubagentPoll()
             }
         }
     }
@@ -244,11 +276,42 @@ class SessionChatViewModel(
     fun stop() {
         streamJob?.cancel()
         streamJob = null
-        _state.update { it.copy(history = it.history.finishStreaming(), sending = false) }
+        stopSubagentPoll()
+        _state.update { it.copy(history = it.history.finishStreaming(), sending = false, turnStartedAtMs = null) }
+    }
+
+    /**
+     * While a turn streams, poll the gateway-wide subagent count (health/detailed
+     * active_delegations) every few seconds. Best-effort: a failed poll leaves the
+     * last value, never surfaces an error. Not scoped to this session (the server
+     * has no per-session count), so the UI labels it as gateway-wide.
+     */
+    private fun startSubagentPoll() {
+        subagentPollJob?.cancel()
+        subagentPollJob = viewModelScope.launch {
+            while (isActive) {
+                // Cheap health-only probe (no /v1/models), safe to poll on a timer.
+                repository.fetchActiveDelegations(config)?.let { count ->
+                    _state.update { it.copy(subagents = count) }
+                }
+                delay(SUBAGENT_POLL_MS)
+            }
+        }
+    }
+
+    private fun stopSubagentPoll() {
+        subagentPollJob?.cancel()
+        subagentPollJob = null
+        _state.update { it.copy(subagents = 0) }
     }
 
     /** A server-reported error frame carried out of the stream collector. */
     private class SessionStreamFailure(message: String) : Exception(message)
+
+    private companion object {
+        /** Subagent-count poll cadence while a turn is active (not too chatty). */
+        const val SUBAGENT_POLL_MS = 5_000L
+    }
 
     class Factory(
         private val sessionId: String,
