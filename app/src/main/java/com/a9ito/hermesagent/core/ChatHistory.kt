@@ -67,6 +67,19 @@ data class ChatHistory(
     fun finish(id: Long): ChatHistory =
         copyMapping(id) { it.copy(streaming = false, thinking = false) }
 
+    /**
+     * Finish whichever assistant message is still streaming (the last one), or
+     * return this unchanged when none is. Lets a ViewModel's stop() cancel its
+     * stream job and settle the UI without re-deriving "the streaming message"
+     * at each call site.
+     */
+    fun finishStreaming(): ChatHistory {
+        val streamingId = messages.lastOrNull {
+            it.role == ChatMessage.Role.ASSISTANT && it.streaming
+        }?.id ?: return this
+        return finish(streamingId)
+    }
+
     /** Mark the assistant message [id] as an error carrying [kind]. */
     fun fail(id: Long, kind: ErrorKind): ChatHistory =
         copyMapping(id) { it.copy(text = "", streaming = false, thinking = false, error = true, errorKind = kind) }

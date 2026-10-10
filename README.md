@@ -127,9 +127,13 @@ the host (same Wi-Fi / tunnel up).
 - Material 3 Expressive (`androidx.compose.material3` 1.4.0) with dynamic color
   on Android 12+ and a hand-picked static fallback palette below that.
 - Retrofit + OkHttp + kotlinx.serialization for REST; OkHttp for SSE streaming.
-- Pure, Android-free `core/` + `dto/` (state reducers, SSE parser, DTO mappers)
+- Pure, Android-free `core/` + `dto/` (state reducers, SSE parsers, DTO mappers)
   covered by JVM unit tests; UI/ViewModels/crypto verified in CI.
 - English + Indonesian localization; adding a locale is "add one file."
+- Security-hardened as a token-holding client: cleartext-to-public-host gate,
+  bounded SSE reads, Trojan-Source neutralization on the approval surface,
+  `FLAG_SECURE` + autofill/tapjacking guards, EXIF-GPS stripping on attachments,
+  and optional TLS certificate pinning. Full write-up in `SECURITY-AUDIT.md`.
 
 The app id stays `com.a9ito.hermesagent` for install/update continuity across
 releases, even though the app is branded Hermes Droid.

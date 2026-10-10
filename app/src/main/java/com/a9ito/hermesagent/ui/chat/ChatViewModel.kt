@@ -190,11 +190,7 @@ class ChatViewModel(
     fun stop() {
         streamJob?.cancel()
         streamJob = null
-        _state.update { st ->
-            val lastAssistant = st.history.messages.lastOrNull { it.role == ChatMessage.Role.ASSISTANT && it.streaming }
-            val h = if (lastAssistant != null) st.history.finish(lastAssistant.id) else st.history
-            st.copy(history = h, sending = false)
-        }
+        _state.update { it.copy(history = it.history.finishStreaming(), sending = false) }
     }
 
     fun clearHistory() {

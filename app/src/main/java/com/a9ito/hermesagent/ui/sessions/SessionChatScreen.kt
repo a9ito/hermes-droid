@@ -63,6 +63,7 @@ import com.a9ito.hermesagent.R
 import com.a9ito.hermesagent.ServiceLocator
 import com.a9ito.hermesagent.core.ChatAttachment
 import com.a9ito.hermesagent.core.ChatMessage
+import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.ToolActivity
 import com.a9ito.hermesagent.ui.common.ImageAttachmentLoader
 import com.a9ito.hermesagent.ui.common.ModelPickerDialog
@@ -109,7 +110,7 @@ fun SessionChatScreen(
                     }
                 },
                 actions = {
-                    val hasPicker = state.modelOptions?.isEmpty == false || state.availableModels.isNotEmpty()
+                    val hasPicker = ModelOptions.hasPicker(state.modelOptions, state.availableModels)
                     if (hasPicker) {
                         TextButton(onClick = { showModelPicker = true }) {
                             Text(stringResource(R.string.session_model_pick))

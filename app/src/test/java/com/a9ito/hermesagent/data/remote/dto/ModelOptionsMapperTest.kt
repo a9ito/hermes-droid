@@ -153,4 +153,17 @@ class ModelOptionsMapperTest {
         assertNull(prov.models.single().pricing) // no pricing map -> null, no crash
         assertFalse(prov.models.single().supportsReasoning)
     }
+
+    @Test fun hasPickerTrueForRichCatalogOrFlatFallback() {
+        // Rich catalog present -> picker shown regardless of the flat list.
+        assertTrue(ModelOptions.hasPicker(parse(realPayload), emptyList()))
+        // No rich catalog but a non-empty flat /v1/models fallback -> still shown.
+        assertTrue(ModelOptions.hasPicker(parse("""{"providers":[]}"""), listOf("gpt-4o")))
+        assertTrue(ModelOptions.hasPicker(null, listOf("gpt-4o")))
+    }
+
+    @Test fun hasPickerFalseWhenNothingToShow() {
+        assertFalse(ModelOptions.hasPicker(null, emptyList()))
+        assertFalse(ModelOptions.hasPicker(parse("""{"providers":[]}"""), emptyList()))
+    }
 }

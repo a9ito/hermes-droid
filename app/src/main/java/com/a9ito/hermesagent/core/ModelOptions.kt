@@ -24,6 +24,16 @@ data class ModelOptions(
      */
     val pending: Boolean get() = providers.any { it.pricingPending }
 
+    companion object {
+        /**
+         * True when a model picker should be offered for a screen: a rich
+         * [options] catalog is present, or the flat /v1/models [fallback] is
+         * non-empty. One definition for the four screens that gate their picker.
+         */
+        fun hasPicker(options: ModelOptions?, fallback: List<String>): Boolean =
+            options?.isEmpty == false || fallback.isNotEmpty()
+    }
+
     /** All selectable model ids across authenticated providers, current first. */
     fun flatModelIds(): List<String> =
         providers.filter { it.authenticated }
@@ -69,9 +79,7 @@ data class ModelOption(
     /** Server-unavailable under the current tier (e.g. paid model on free tier). */
     val unavailable: Boolean = false,
     val pricing: ModelPricing? = null,
-) {
-    val isFeaturedEligible: Boolean get() = !unavailable
-}
+)
 
 /**
  * Pre-formatted price strings straight from the server (e.g. "$3.00", "free").
