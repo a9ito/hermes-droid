@@ -97,7 +97,9 @@ address the phone can hit. Pick one:
 
 > Security note: the API-server key is full control of your agent. Prefer a
 > tunnel with TLS over exposing port 8642 to the open internet, and never share
-> the key.
+> the key. For an HTTPS endpoint you can also pin the server certificate in
+> Settings (tap "Pin current certificate"), so a forged but publicly-trusted
+> certificate is rejected. Pinning is optional and only applies to https.
 
 ### 3. Configure the app
 

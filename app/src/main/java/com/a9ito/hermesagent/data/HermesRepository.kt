@@ -11,6 +11,7 @@ import com.a9ito.hermesagent.core.InstanceStatus
 import com.a9ito.hermesagent.core.SessionMessage
 import com.a9ito.hermesagent.core.SessionSummary
 import com.a9ito.hermesagent.data.remote.AuthInterceptor
+import com.a9ito.hermesagent.data.remote.CertificateProbe
 import com.a9ito.hermesagent.data.remote.ChatStreamer
 import com.a9ito.hermesagent.data.remote.ErrorMapper
 import com.a9ito.hermesagent.data.remote.HermesApi
@@ -44,6 +45,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.OkHttpClient
+import okhttp3.CertificatePinner
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import okhttp3.MediaType.Companion.toMediaType
@@ -76,12 +78,32 @@ class HermesRepository(
 
     private val tokenRef = AtomicReference("")
 
-    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(120, TimeUnit.SECONDS) // long tool turns
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .addInterceptor(AuthInterceptor { tokenRef.get() })
-        .build()
+    // The base + streaming OkHttp clients are rebuilt only when the set of TLS
+    // pins changes (rare), and cached by a pins key, mirroring the Retrofit
+    // per-base-URL cache below. A CertificatePinner is immutable once built into
+    // a client, and the pins come from the (editable) saved config, so the client
+    // cannot be a single constructor-time singleton.
+    private fun buildBaseClient(pins: List<String>, host: String): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS) // long tool turns
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(AuthInterceptor { tokenRef.get() })
+        // Pin only when the user supplied pins AND we have a host to bind them to.
+        // CertificatePinner only acts on TLS connections, so a cleartext LAN
+        // connection is unaffected; https to a non-matching cert is rejected
+        // before the token is sent.
+        if (pins.isNotEmpty() && host.isNotEmpty()) {
+            val pinnerBuilder = CertificatePinner.Builder()
+            for (pin in pins) pinnerBuilder.add(host, pin)
+            builder.certificatePinner(pinnerBuilder.build())
+        }
+        return builder.build()
+    }
+
+    @Volatile private var cachedPinsKey: String = "\u0000uninit"
+    @Volatile private var cachedBaseClient: OkHttpClient? = null
+    @Volatile private var cachedStreamingClient: OkHttpClient? = null
 
     // SSE streams stay open for a whole agent turn, which legitimately runs for
     // many minutes while server-side tools execute. The server emits a keepalive
@@ -89,37 +111,50 @@ class HermesRepository(
     // gateway) those can starve past any fixed idle bound — so a readTimeout here
     // aborts a perfectly healthy turn mid-flight ("request timed out"). Lift only
     // the idle-read cap for streaming; connect/write stay so a genuinely dead
-    // socket is still detected, and leaving the screen cancels the coroutine. Reuses
-    // the base client's connection pool + AuthInterceptor via newBuilder().
-    private val streamingClient: OkHttpClient = okHttpClient.newBuilder()
-        .readTimeout(0, TimeUnit.SECONDS)
-        .build()
-
-    private val streamer = ChatStreamer(streamingClient, json)
-    private val sessionStreamer = SessionChatStreamer(streamingClient, json)
-    private val runStreamer = RunEventStreamer(streamingClient, json)
+    // socket is still detected, and leaving the screen cancels the coroutine. The
+    // streaming client reuses the base client's connection pool + AuthInterceptor
+    // + certificate pinner via newBuilder().
+    private fun clientsFor(config: ConnectionConfig): Pair<OkHttpClient, OkHttpClient> {
+        // Key on the host too: a pin set is bound to a specific host, so a base
+        // URL change must rebuild the pinner even if the pin strings are the same.
+        val key = com.a9ito.hermesagent.core.CleartextPolicy.hostOf(config.effectiveBaseUrl) +
+            "|" + config.certPins.joinToString(",")
+        val base = cachedBaseClient
+        val stream = cachedStreamingClient
+        if (base != null && stream != null && cachedPinsKey == key) return base to stream
+        val host = com.a9ito.hermesagent.core.CleartextPolicy.hostOf(config.effectiveBaseUrl)
+        val newBase = buildBaseClient(config.certPins, host)
+        val newStream = newBase.newBuilder().readTimeout(0, TimeUnit.SECONDS).build()
+        cachedBaseClient = newBase
+        cachedStreamingClient = newStream
+        cachedPinsKey = key
+        return newBase to newStream
+    }
 
     // Cache one Retrofit per base URL so we don't rebuild on every call.
     @Volatile private var cachedBaseUrl: String = ""
     @Volatile private var cachedApi: HermesApi? = null
+    @Volatile private var cachedApiClient: OkHttpClient? = null
 
     val connectionFlow: Flow<ConnectionConfig> = settings.connectionFlow
 
     private fun apiFor(config: ConnectionConfig): HermesApi {
         tokenRef.set(config.token)
         val base = config.effectiveBaseUrl
+        val (baseClient, _) = clientsFor(config)
         val existing = cachedApi
-        if (existing != null && cachedBaseUrl == base) return existing
+        if (existing != null && cachedBaseUrl == base && cachedApiClient === baseClient) return existing
 
         @Suppress("OPT_IN_USAGE")
         val contentType = "application/json".toMediaType()
         val retrofit = Retrofit.Builder()
             .baseUrl(base)
-            .client(okHttpClient)
+            .client(baseClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
         val api = retrofit.create(HermesApi::class.java)
         cachedBaseUrl = base
+        cachedApiClient = baseClient
         cachedApi = api
         return api
     }
@@ -193,7 +228,8 @@ class HermesRepository(
         require(config.isComplete)
         tokenRef.set(config.token)
         val payload = ChatCompletionPayload.encode(json, model, history, stream = true, provider = provider, attachments = attachments, modelOptions = modelOptions)
-        streamer.stream(config.effectiveBaseUrl, payload).collect { emit(it) }
+        val (_, streamingClient) = clientsFor(config)
+        ChatStreamer(streamingClient, json).stream(config.effectiveBaseUrl, payload).collect { emit(it) }
     }
 
     fun classify(t: Throwable): ErrorKind = ErrorMapper.classify(t)
@@ -409,7 +445,8 @@ class HermesRepository(
         require(config.isComplete)
         tokenRef.set(config.token)
         val payload = SessionChatPayload.encode(json, message, attachments, model = null, modelOptions = modelOptions)
-        sessionStreamer.stream(config.effectiveBaseUrl, sessionId, payload).collect { emit(it) }
+        val (_, streamingClient) = clientsFor(config)
+        SessionChatStreamer(streamingClient, json).stream(config.effectiveBaseUrl, sessionId, payload).collect { emit(it) }
     }
 
     // ---- Cron jobs ----
@@ -528,8 +565,19 @@ class HermesRepository(
     fun streamRunEvents(config: ConnectionConfig, runId: String): Flow<RunStreamEvent> = flow {
         require(config.isComplete)
         tokenRef.set(config.token)
-        runStreamer.stream(config.effectiveBaseUrl, runId).collect { emit(it) }
+        val (_, streamingClient) = clientsFor(config)
+        RunEventStreamer(streamingClient, json).stream(config.effectiveBaseUrl, runId).collect { emit(it) }
     }
+
+    /**
+     * Trust-on-first-use capture of the server's current TLS leaf pin, so the
+     * user can turn on pinning without hand-computing a hash. Delegates to
+     * [CertificateProbe], which opens a normally-validated HTTPS connection (no
+     * bearer token sent) and returns the `sha256/<base64>` SPKI pin. A cleartext
+     * base URL yields [CertificateProbe.Result.NotHttps].
+     */
+    suspend fun captureCertPin(config: ConnectionConfig): CertificateProbe.Result =
+        CertificateProbe.probe(config.effectiveBaseUrl)
 
     suspend fun stopRun(config: ConnectionConfig, runId: String): ApiResult<Unit> =
         runControl(config) { apiFor(config).stopRun(runId) }

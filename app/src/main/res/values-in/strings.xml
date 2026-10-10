@@ -196,6 +196,17 @@
     <string name="settings_profile_placeholder">default</string>
     <string name="settings_profile_supporting">Kosongkan untuk profil default. Isi nama buat routing lewat profil multiplex di /p/&lt;nama&gt;/.</string>
     <string name="settings_error_profile_invalid">Pakai huruf, angka, titik, strip, atau garis bawah saja.</string>
+    <string name="settings_cert_pins_label">Pin sertifikat (opsional)</string>
+    <string name="settings_cert_pins_placeholder">sha256/AAAA… (satu per baris)</string>
+    <string name="settings_cert_pins_supporting">Opsional. Kunci sertifikat HTTPS server ini biar sertifikat palsu ditolak. Pakai "Pin sertifikat sekarang" di bawah buat nangkepnya, atau tempel pin SPKI sha256/ (satu per baris). Kosongkan buat TLS biasa. Cuma berlaku di https, bukan LAN cleartext.</string>
+    <string name="settings_error_cert_pins_invalid">Tiap pin harus berupa sha256/ diikuti nilai base64 sepanjang 44 karakter.</string>
+    <string name="settings_cert_capture">Pin sertifikat sekarang</string>
+    <string name="settings_cert_capturing">Menangkap sertifikat…</string>
+    <string name="settings_cert_capture_ok">Pin sertifikat server ini ketangkep. Cek dulu, lalu Simpan buat ngaktifin pinning.</string>
+    <string name="settings_cert_capture_dup">Sertifikat itu udah dipin.</string>
+    <string name="settings_cert_capture_not_https">Pinning butuh endpoint https. Set host ke https:// dulu.</string>
+    <string name="settings_cert_capture_bad_url">Isi host dan port yang valid dulu sebelum nangkep sertifikat.</string>
+    <string name="settings_cert_capture_failed">Nggak bisa nyampe ke server atau validasi sertifikatnya. Cek endpoint-nya terus coba lagi.</string>
     <!-- Appearance -->
     <string name="appearance_header">Tampilan</string>
     <string name="appearance_theme_mode">Tema</string>

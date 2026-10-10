@@ -6,14 +6,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +56,7 @@ import com.a9ito.hermesagent.ui.theme.AppearanceViewModel
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(
-        factory = SettingsViewModel.Factory(ServiceLocator.settings()),
+        factory = SettingsViewModel.Factory(ServiceLocator.settings(), ServiceLocator.hermes()),
     ),
     appearanceViewModel: AppearanceViewModel = viewModel(
         factory = AppearanceViewModel.Factory(ServiceLocator.appearance()),
@@ -71,6 +74,20 @@ fun SettingsScreen(
         if (state.saved || state.cleared) viewModel.consumeEvents()
     }
 
+    val captureMessages = mapOf(
+        CaptureOutcome.CAPTURED to stringResource(R.string.settings_cert_capture_ok),
+        CaptureOutcome.ALREADY_PRESENT to stringResource(R.string.settings_cert_capture_dup),
+        CaptureOutcome.NOT_HTTPS to stringResource(R.string.settings_cert_capture_not_https),
+        CaptureOutcome.BAD_URL to stringResource(R.string.settings_cert_capture_bad_url),
+        CaptureOutcome.FAILED to stringResource(R.string.settings_cert_capture_failed),
+    )
+    LaunchedEffect(state.captureOutcome) {
+        state.captureOutcome?.let { outcome ->
+            captureMessages[outcome]?.let { snackbarHostState.showSnackbar(it) }
+            viewModel.consumeCaptureOutcome()
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) },
@@ -84,6 +101,8 @@ fun SettingsScreen(
             onPortChange = viewModel::onPortChange,
             onTokenChange = viewModel::onTokenChange,
             onProfileChange = viewModel::onProfileChange,
+            onCertPinsChange = viewModel::onCertPinsChange,
+            onCaptureCertPin = viewModel::captureCertPin,
             onToggleToken = viewModel::toggleTokenVisibility,
             onSave = viewModel::save,
             onClear = viewModel::clear,
@@ -110,6 +129,8 @@ private fun SettingsContent(
     onPortChange: (String) -> Unit,
     onTokenChange: (String) -> Unit,
     onProfileChange: (String) -> Unit,
+    onCertPinsChange: (String) -> Unit,
+    onCaptureCertPin: () -> Unit,
     onToggleToken: () -> Unit,
     onSave: () -> Unit,
     onClear: () -> Unit,
@@ -220,6 +241,52 @@ private fun SettingsContent(
                 )
             },
         )
+
+        val certPinsError = state.invalidField == SettingsField.CERT_PINS
+        OutlinedTextField(
+            value = state.certPins,
+            onValueChange = onCertPinsChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.settings_cert_pins_label)) },
+            placeholder = { Text(stringResource(R.string.settings_cert_pins_placeholder)) },
+            singleLine = false,
+            isError = certPinsError,
+            supportingText = {
+                Text(
+                    if (certPinsError) stringResource(R.string.settings_error_cert_pins_invalid)
+                    else stringResource(R.string.settings_cert_pins_supporting),
+                )
+            },
+        )
+
+        // Trust-on-first-use capture: shown only when the typed endpoint is https
+        // (a pin can only come from a TLS handshake). It fetches the server's
+        // current leaf-certificate pin and appends it to the field above; the user
+        // still has to Save to persist, and nothing is pinned until then.
+        if (state.canCapturePin) {
+            OutlinedButton(
+                onClick = onCaptureCertPin,
+                enabled = !state.capturing,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (state.capturing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_cert_capturing),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                } else {
+                    Icon(Icons.Filled.Lock, contentDescription = null)
+                    Text(
+                        text = stringResource(R.string.settings_cert_capture),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+        }
 
         state.resolvedEndpoint?.let { endpoint ->
             Text(stringResource(R.string.settings_resolved_endpoint, endpoint))

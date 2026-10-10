@@ -196,6 +196,17 @@
     <string name="settings_profile_placeholder">default</string>
     <string name="settings_profile_supporting">Leave blank for the default profile. Enter a name to route through a multiplex profile at /p/&lt;name&gt;/.</string>
     <string name="settings_error_profile_invalid">Use only letters, numbers, dot, dash, or underscore.</string>
+    <string name="settings_cert_pins_label">Certificate pins (optional)</string>
+    <string name="settings_cert_pins_placeholder">sha256/AAAA… (one per line)</string>
+    <string name="settings_cert_pins_supporting">Optional. Pin this server\'s HTTPS certificate so a forged certificate is rejected. Use "Pin current certificate" below to capture it, or paste sha256/ SPKI pins (one per line). Leave blank for normal TLS. Only applies to https, not cleartext LAN.</string>
+    <string name="settings_error_cert_pins_invalid">Each pin must look like sha256/ followed by a 44 character base64 value.</string>
+    <string name="settings_cert_capture">Pin current certificate</string>
+    <string name="settings_cert_capturing">Capturing certificate…</string>
+    <string name="settings_cert_capture_ok">Captured this server\'s certificate pin. Review it, then Save to enable pinning.</string>
+    <string name="settings_cert_capture_dup">That certificate is already pinned.</string>
+    <string name="settings_cert_capture_not_https">Pinning needs an https endpoint. Set the host to https:// first.</string>
+    <string name="settings_cert_capture_bad_url">Enter a valid host and port before capturing a certificate.</string>
+    <string name="settings_cert_capture_failed">Could not reach the server or validate its certificate. Check the endpoint and try again.</string>
     <!-- Appearance -->
     <string name="appearance_header">Appearance</string>
     <string name="appearance_theme_mode">Theme</string>
