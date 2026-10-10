@@ -5,6 +5,40 @@ derived from the pushed git tag (release.yml strips the leading `v` for
 `versionName`; `versionCode` is the CI run number), so there is no committed
 version literal to bump: the version is chosen when the tag is pushed.
 
+## v0.3.4
+
+Adds optional TLS certificate pinning, the last security item left open after
+the v0.3.2 and v0.3.3 hardening passes. Same storage format and signing key, so
+existing users keep their saved connection and token, and pinning is off by
+default so nothing changes unless you turn it on.
+
+### Security
+
+- You can now pin your server's HTTPS certificate so a forged certificate is
+  rejected even if it is signed by a certificate authority your phone trusts.
+  When a pin is set and the server is reached over https, the app refuses to
+  connect, and refuses to send the token, if the server's certificate does not
+  match. This closes the gap where a same-network attacker holding any
+  publicly-trusted certificate could still intercept an https connection.
+- A "Pin current certificate" button captures the pin for you: it opens a normal,
+  fully-validated HTTPS connection to your server and records that certificate's
+  key, so you do not have to compute a hash by hand. You can still paste pins (the
+  `sha256/` SPKI form, one per line) if you prefer. The capture never sends your
+  token.
+- Pinning is strictly opt-in: leave the field blank for normal TLS. It only
+  applies to https, so a cleartext connection on your LAN is unaffected. A pin
+  that does not parse is rejected on save rather than silently ignored, so a typo
+  cannot leave you thinking you are protected when you are not.
+
+### Notes
+
+- Verified on a developer device with the project's JVM unit tests (245 passing,
+  adding coverage for pin parsing, validation, and the capture hash). The
+  networking, capture, and settings wiring is verified by the CI build; the
+  end-to-end pinning behavior against a real server should be confirmed on-device.
+- No new third-party dependency: pinning uses the certificate pinner already
+  bundled with the app's HTTP client.
+
 ## v0.3.3
 
 A second security-hardening release. It closes the defense-in-depth items left

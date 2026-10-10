@@ -160,9 +160,17 @@ v0.3.2 release of F-1..F-3):
 
 Still open (recommendations, not in these passes):
 
-- **No TLS certificate pinning** for HTTPS deployments. New feature; a
-  self-hosted instance's cert/CA is user-specific, so pinning needs a
-  user-provided pin UI. Deferred.
+- **TLS certificate pinning (done in v0.3.4).** `CertPin` parses and computes
+  `sha256/<base64>` SPKI pins; `CertificateProbe` captures the server's live
+  leaf pin over a normally-validated HTTPS handshake (trust-on-first-use, no
+  bearer token sent) so the user enables pinning with one button instead of
+  hand-computing a hash; `HermesRepository` builds the OkHttp clients through an
+  OkHttp `CertificatePinner` when pins are present, rebuilding only when the
+  host or pin set changes. Opt-in: no pins means normal TLS (never weaker), and
+  pinning only acts on https, so cleartext LAN is unaffected. A pin that does
+  not parse is rejected on save, so a typo cannot leave the user believing they
+  are pinned. Needs an on-device check against a real server; the pin maths is
+  unit-tested, the networking/UI wiring is CI-compile verified.
 - **Gradle dependency verification metadata** (`gradle/verification-metadata.xml`)
   is not generated; doing so requires a full dependency resolve that cannot run
   on this device (no Android SDK). Recommended as a CI-side task.
