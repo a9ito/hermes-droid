@@ -66,6 +66,7 @@ import com.a9ito.hermesagent.core.ChatMessage
 import com.a9ito.hermesagent.core.ModelOptions
 import com.a9ito.hermesagent.core.ToolActivity
 import com.a9ito.hermesagent.ui.common.ImageAttachmentLoader
+import com.a9ito.hermesagent.ui.common.AgentStatusStrip
 import com.a9ito.hermesagent.ui.common.ModelPickerDialog
 import com.a9ito.hermesagent.ui.common.ReasoningControlDialog
 import com.a9ito.hermesagent.ui.common.reasoningBadge
@@ -201,6 +202,19 @@ fun SessionChatScreen(
                 onStop = viewModel::stop,
                 onAddAttachment = viewModel::addAttachment,
                 onRemoveAttachment = viewModel::removeAttachment,
+                statusStrip = {
+                    // Floating status strip, hovering just above the input: live agent
+                    // timer + gateway-wide subagent count while running, last-turn token
+                    // count, and session age. Token count is raw (no context-window % is
+                    // exposed by the server).
+                    AgentStatusStrip(
+                        agentRunning = state.agentRunning,
+                        turnStartedAtMs = state.turnStartedAtMs,
+                        sessionStartedAtEpochSec = state.sessionStartedAt,
+                        lastTurnTokens = state.lastTurnTokens,
+                        subagents = state.subagents,
+                    )
+                },
             )
         }
     }
@@ -348,6 +362,7 @@ private fun InputBar(
     onStop: () -> Unit,
     onAddAttachment: (ChatAttachment) -> Unit,
     onRemoveAttachment: (Int) -> Unit,
+    statusStrip: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -370,8 +385,12 @@ private fun InputBar(
     }
     val canSend = (input.isNotBlank() || attachments.isNotEmpty()) && !sending
 
-    Surface(tonalElevation = 3.dp) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+    // The status strip floats ABOVE the input surface (outside it), so it reads as
+    // a separate hovering pill over the input rather than part of the input bar.
+    Column(modifier = Modifier.fillMaxWidth()) {
+        statusStrip()
+        Surface(tonalElevation = 3.dp) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             if (attachments.isNotEmpty()) {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
@@ -442,6 +461,7 @@ private fun InputBar(
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.cd_send_message))
                     }
                 }
+            }
             }
         }
     }

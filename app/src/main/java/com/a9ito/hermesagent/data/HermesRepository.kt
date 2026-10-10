@@ -171,6 +171,18 @@ class HermesRepository(
     }
 
     /**
+     * Gateway-wide subagent (delegation) count from /health/detailed ONLY — no
+     * /v1/models call, so it is cheap enough to poll on a timer while a turn runs.
+     * Returns null on any failure (best-effort live metric, never an error path).
+     */
+    suspend fun fetchActiveDelegations(config: ConnectionConfig): Int? {
+        if (!config.isComplete) return null
+        return runCatching {
+            apiFor(config).healthDetailed().readiness?.checks?.backgroundQueues?.activeDelegations
+        }.getOrNull()
+    }
+
+    /**
      * GET /v1/capabilities. A 404/older gateway (no such endpoint) is NOT an
      * error the user should see — it means "capabilities unknown", so we map it
      * to [Capabilities.baseline] rather than a failure. Any other failure (auth,
@@ -609,19 +621,23 @@ class HermesRepository(
 /** The three side-effecting job verbs the app exposes. */
 enum class JobAction { PAUSE, RESUME, RUN }
 
-private fun HealthDetailedDto.toInstanceStatus(modelId: String?): InstanceStatus =
-    InstanceStatus(
+private fun HealthDetailedDto.toInstanceStatus(modelId: String?): InstanceStatus {
+    val queues = readiness?.checks?.backgroundQueues
+    return InstanceStatus(
         reachable = true,
         overallStatus = status,
         readiness = readiness?.status,
         gatewayState = gatewayState,
         busy = gatewayBusy,
         activeAgents = activeAgents,
+        activeDelegations = queues?.activeDelegations,
+        activeApiRuns = queues?.activeApiRuns,
         model = modelId,
         version = version,
         connectedPlatforms = connectedPlatformNames(),
         updatedAt = updatedAt,
     )
+}
 
 /** Extract connected-platform names from the raw platforms map, best-effort. */
 private fun HealthDetailedDto.connectedPlatformNames(): List<String> {

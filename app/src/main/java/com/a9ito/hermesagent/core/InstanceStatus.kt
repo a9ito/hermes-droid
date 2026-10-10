@@ -13,6 +13,10 @@ data class InstanceStatus(
     val gatewayState: String? = null,
     val busy: Boolean? = null,
     val activeAgents: Int? = null,
+    /** Subagents running gateway-wide (readiness.checks.background_queues.active_delegations). */
+    val activeDelegations: Int? = null,
+    /** Durable agent runs in flight gateway-wide (active_api_runs). */
+    val activeApiRuns: Int? = null,
     val model: String? = null,
     val version: String? = null,
     val connectedPlatforms: List<String> = emptyList(),

@@ -29,6 +29,13 @@ data class RunsUiState(
     val configLoaded: Boolean = false,
     /** Null until capabilities resolve; drives the "not supported" gate. */
     val capabilities: Capabilities? = null,
+    /**
+     * Set when the capabilities probe itself FAILED (auth/network/transient),
+     * as opposed to the gateway answering that it lacks run control. Kept
+     * separate so a failed check offers "retry" instead of the misleading
+     * "update your gateway" message. Null once capabilities resolve.
+     */
+    val capabilitiesError: ErrorKind? = null,
     val input: String = "",
     val run: AgentRun? = null,
     val submitting: Boolean = false,
@@ -108,13 +115,21 @@ class RunsViewModel(
 
     private fun loadCapabilities() {
         if (!config.isComplete) return
+        _state.update { it.copy(capabilitiesError = null) }
         viewModelScope.launch {
             when (val res = repository.fetchCapabilities(config)) {
-                is ApiResult.Success -> _state.update { it.copy(capabilities = res.data) }
-                is ApiResult.Failure -> _state.update { it.copy(capabilities = Capabilities.baseline()) }
+                is ApiResult.Success -> _state.update { it.copy(capabilities = res.data, capabilitiesError = null) }
+                // The probe FAILED (auth/network/transient). Do NOT fall back to a
+                // run-less baseline here: that renders the misleading "update your
+                // gateway" screen for what is really a connection problem. Leave
+                // capabilities null and record the error so the screen can offer retry.
+                is ApiResult.Failure -> _state.update { it.copy(capabilitiesError = res.kind) }
             }
         }
     }
+
+    /** Re-probe capabilities after a failed check (user tapped retry). */
+    fun retryCapabilities() = loadCapabilities()
 
     /**
      * Load the model catalog for the picker. Prefer the rich /api/model/options

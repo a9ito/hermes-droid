@@ -120,6 +120,8 @@
     <string name="runs_locked_subtitle">Add your host and API token in Settings to start agent runs.</string>
     <string name="runs_unsupported_title">Runs not supported</string>
     <string name="runs_unsupported_subtitle">This instance doesn\'t advertise the run-control API (submit/stop/events). Update the gateway to use this screen.</string>
+    <string name="runs_caps_failed_title">Couldn\'t check this instance</string>
+    <string name="runs_caps_failed_subtitle">We couldn\'t read what this instance supports: %1$s. This is usually a connection or token problem, not a missing feature. Check Status, then retry.</string>
     <string name="runs_error_prefix">Run failed: %1$s</string>
     <string name="runs_activity">Activity</string>
     <string name="runs_stop">Stop</string>
@@ -276,6 +278,8 @@
     <string name="status_field_readiness">Readiness</string>
     <string name="status_field_busy">Busy</string>
     <string name="status_field_active_agents">Active agents</string>
+    <string name="status_field_active_runs">Active runs</string>
+    <string name="status_field_subagents">Subagents running</string>
     <string name="status_field_model">Model</string>
     <string name="status_field_version">Version</string>
     <string name="status_field_platforms">Connected platforms</string>
@@ -308,6 +312,13 @@
     <string name="error_server">The instance hit a server-side error. This is a problem on the instance, not the app. Check the gateway logs.</string>
     <string name="error_unexpected">Unexpected error.</string>
     <string name="action_dismiss">Dismiss</string>
+    <string name="action_retry">Retry</string>
+
+    <!-- Agent status strip (floats above the chat input) -->
+    <string name="status_strip_agent">Agent %1$s</string>
+    <string name="status_strip_session">Session %1$s</string>
+    <string name="status_strip_tokens">~%1$s tok</string>
+    <string name="status_strip_subagents">%1$d subagents</string>
 
     <!-- Content descriptions (accessibility) -->
     <string name="cd_send_message">Send message</string>

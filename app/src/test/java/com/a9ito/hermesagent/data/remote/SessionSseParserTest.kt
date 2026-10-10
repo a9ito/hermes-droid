@@ -111,4 +111,27 @@ class SessionSseParserTest {
         val events = feed(listOf("event: assistant.delta", "data: {not json"))
         assertTrue(events.single() is SessionStreamEvent.Ignored)
     }
+
+    @Test fun terminalRunEventCarriesUsageTokens() {
+        val events = feed(
+            listOf(
+                "event: run.completed",
+                """data: {"message_id":"m1","usage":{"input_tokens":900,"output_tokens":100,"total_tokens":1000}}""",
+            )
+        )
+        assertEquals(1000L, events.filterIsInstance<SessionStreamEvent.Usage>().single().totalTokens)
+    }
+
+    @Test fun terminalRunEventWithoutUsageIsIgnoredNotUsage() {
+        // run.started and a run.<status> with no usage block must not emit a phantom Usage(0).
+        val events = feed(
+            listOf(
+                "event: run.started",
+                """data: {"user_message":{"role":"user","content":"hi"}}""",
+                "event: run.completed",
+                """data: {"message_id":"m1"}""",
+            )
+        )
+        assertTrue(events.all { it is SessionStreamEvent.Ignored })
+    }
 }

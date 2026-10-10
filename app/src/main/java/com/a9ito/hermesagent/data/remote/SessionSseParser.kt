@@ -1,6 +1,7 @@
 package com.a9ito.hermesagent.data.remote
 
 import com.a9ito.hermesagent.core.SafeText
+import com.a9ito.hermesagent.core.longOrZero
 import com.a9ito.hermesagent.core.stringOrEmpty
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -29,6 +30,8 @@ sealed interface SessionStreamEvent {
     data class ToolFailed(val toolName: String) : SessionStreamEvent
     /** Mid-turn assistant commentary beside tool calls (event: assistant.commentary). */
     data class Commentary(val text: String) : SessionStreamEvent
+    /** Terminal per-turn usage, carried on run.<status> ({"usage":{"total_tokens":N}}). */
+    data class Usage(val totalTokens: Long) : SessionStreamEvent
     /** Stream finished (event: done, or data: [DONE]). */
     data object Done : SessionStreamEvent
     /** A frame we don't render (run.*, message.started, keepalive). */
@@ -82,7 +85,18 @@ class SessionSseParser(
             "tool.failed" -> SessionStreamEvent.ToolFailed(SafeText.forControlDisplay(obj.stringOrEmpty("tool_name")) ?: "")
             "error" -> SessionStreamEvent.Failed(obj.stringOrEmpty("message"))
             "done" -> SessionStreamEvent.Done
-            else -> SessionStreamEvent.Ignored
+            else -> {
+                // run.<status> carries the terminal per-turn usage block. Surface the
+                // total-token count (prompt+completion for THIS turn, ~ the context the
+                // model just processed) so the status bar can show it; the server does
+                // not expose a context-window limit, so this is a raw count, not a %.
+                if (name != null && name.startsWith("run.")) {
+                    val total = (obj["usage"] as? JsonObject)?.longOrZero("total_tokens") ?: 0L
+                    if (total > 0L) SessionStreamEvent.Usage(total) else SessionStreamEvent.Ignored
+                } else {
+                    SessionStreamEvent.Ignored
+                }
+            }
         }
     }
 }

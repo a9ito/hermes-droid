@@ -21,6 +21,10 @@ fun SessionDto.toSummary(): SessionSummary = SessionSummary(
     model = model,
     messageCount = messageCount,
     lastActive = lastActive ?: endedAt ?: startedAt,
+    startedAt = startedAt,
+    // Cumulative lifetime usage (sum of every call's prompt+completion), NOT current
+    // context occupancy — the API server does not expose live context size.
+    totalTokens = inputTokens + outputTokens,
     preview = preview?.takeIf { it.isNotBlank() },
     pinned = pinned,
     archived = archived,

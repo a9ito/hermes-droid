@@ -10,6 +10,10 @@ data class SessionSummary(
     val model: String? = null,
     val messageCount: Int = 0,
     val lastActive: Double? = null,
+    /** Epoch seconds the session was created, for a session-age readout. */
+    val startedAt: Double? = null,
+    /** Cumulative input+output tokens billed across the session's whole life. */
+    val totalTokens: Long = 0,
     val preview: String? = null,
     val pinned: Boolean = false,
     val archived: Boolean = false,

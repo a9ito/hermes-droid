@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.longOrNull
 
 /**
  * Pure, Android-free primitive extractors for a kotlinx [JsonObject].
@@ -26,3 +27,7 @@ fun JsonObject.stringOrNull(key: String): String? =
 /** The boolean content of [key], or false when absent or not a boolean primitive. */
 fun JsonObject.booleanOrFalse(key: String): Boolean =
     (this[key] as? JsonPrimitive)?.booleanOrNull ?: false
+
+/** The long content of [key], or 0 when absent or not a numeric primitive. */
+fun JsonObject.longOrZero(key: String): Long =
+    (this[key] as? JsonPrimitive)?.longOrNull ?: 0L
